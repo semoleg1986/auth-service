@@ -1,0 +1,46 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+package "Interface" {
+  [HTTP API]
+}
+
+package "Application" {
+  [Use Cases]
+  [Policies]
+}
+
+package "Domain" {
+  [UserAccount]
+  [Credential]
+  [Session]
+  [Role]
+}
+
+package "Infrastructure" {
+  [UserAccountRepository]
+  [SessionRepository]
+  [JWT Signer]
+  [JWKS Publisher]
+  [Key Store]
+  [Database]
+}
+
+[HTTP API] --> [Use Cases]
+[Use Cases] --> [Policies]
+[Use Cases] --> [UserAccount]
+[Use Cases] --> [Credential]
+[Use Cases] --> [Session]
+[Use Cases] --> [Role]
+
+[UserAccountRepository] ..> [UserAccount]
+[SessionRepository] ..> [Session]
+
+[JWT Signer] --> [Key Store]
+[JWKS Publisher] --> [Key Store]
+
+[UserAccountRepository] --> [Database]
+[SessionRepository] --> [Database]
+@enduml

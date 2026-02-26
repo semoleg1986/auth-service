@@ -1,0 +1,34 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+class UserAccount {
+  user_id: UUID
+  email: str?
+  phone: str?
+  status: active|blocked|deleted
+  roles: set[Role]
+}
+
+class Credential {
+  credential_id: UUID
+  type: password|oauth
+  hash: str
+}
+
+class Session {
+  token_id: UUID
+  user_id: UUID
+  expires_at: datetime
+  revoked_at: datetime?
+}
+
+class Role {
+  name: str
+}
+
+UserAccount "1" o-- "1..*" Credential
+UserAccount "1" o-- "0..*" Session
+UserAccount "1" o-- "0..*" Role
+@enduml

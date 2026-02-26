@@ -1,0 +1,45 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor "User" as user
+actor "Admin" as admin
+
+rectangle "Clients" as clients {
+  [Web Client] as web
+  [Mobile Client] as mobile
+  [Admin Client] as admin_client
+}
+
+rectangle "Auth Service" as auth {
+  [Auth API]
+  [JWT Issuer]
+  [JWKS Endpoint]
+}
+
+rectangle "Domain Services" as domain {
+  [User-Children Service]
+  [Other Services]
+}
+
+rectangle "Infrastructure" as infra {
+  [Database]
+  [Key Store]
+}
+
+user --> web
+user --> mobile
+admin --> admin_client
+
+web --> auth : Register/Login/Refresh
+mobile --> auth : Register/Login/Refresh
+admin_client --> auth : Manage Roles/Users
+
+auth --> infra : Persist Accounts/Sessions
+auth --> domain : Publish JWKS
+
+web --> domain : API calls with JWT
+mobile --> domain : API calls with JWT
+admin_client --> domain : API calls with JWT
+@enduml
