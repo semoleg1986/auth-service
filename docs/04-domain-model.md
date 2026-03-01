@@ -1,72 +1,58 @@
-# Auth Service — Domain Model
+# Доменная Модель
 
-## Purpose
+## Назначение
 
-Фиксирует агрегаты и сущности auth‑контекста.
+Фиксирует агрегаты и сущности auth-контекста.
 
----
-
-## Aggregates
+## Агрегаты
 
 ### 1. UserAccount (Aggregate Root)
-
-- **Attributes**:
+- **Атрибуты**:
   - `user_id: UUID`
   - `email: str | None`
   - `phone: str | None`
   - `org_id: str | None` (опциональная принадлежность к организации)
   - `status: active | blocked | deleted`
   - `roles: set[Role]`
-- **Behavior**:
+- **Поведение**:
   - `register(credentials)`
   - `assign_role(role)`
   - `block()` / `unblock()`
   - `change_email()` / `change_phone()`
-- **Invariants**:
+- **Инварианты**:
   - хотя бы один идентификатор (email или phone)
   - уникальность email/phone
   - blocked не может логиниться
 
----
-
 ### 2. Credential (Entity)
-
-- **Types**:
+- **Типы**:
   - PasswordCredential
   - OAuthCredential (опционально)
-- **Attributes**:
+- **Атрибуты**:
   - `credential_id: UUID`
   - `type: password | oauth`
   - `hash: str` (для password)
-- **Invariants**:
+- **Инварианты**:
   - хранится только хеш
   - нельзя иметь два одинаковых credential одного типа
 
----
-
 ### 3. Session / RefreshToken (Entity)
-
-- **Attributes**:
+- **Атрибуты**:
   - `token_id: UUID`
   - `user_id: UUID`
   - `expires_at: datetime`
   - `revoked_at: datetime | None`
-- **Behavior**:
+- **Поведение**:
   - `revoke()`
   - `is_active(now)`
 
----
-
 ### 4. Role (Value Object)
-
-- **Attributes**:
+- **Атрибуты**:
   - `name: str` (например, admin, user)
-- **Rules**:
+- **Правила**:
   - присваивается через политики
 
----
-
-## Repositories (Interfaces)
+## Репозитории (интерфейсы)
 
 - **UserAccountRepository**
   - `get_by_id(user_id)`
@@ -78,9 +64,7 @@
   - `save(session)`
   - `revoke(token_id)`
 
----
-
-## Notes
+## Примечания
 
 1. Access token не является сущностью домена.
 2. RefreshToken хранится и управляется доменом.
