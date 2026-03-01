@@ -30,6 +30,35 @@ lint: ## Проверка стиля и типов (flake8 + mypy)
 check: format lint test ## Полная проверка качества кода
 
 # ========================
+# Run
+# ========================
+
+run: ## Запустить HTTP сервис (uvicorn)
+	@if [ ! -f .env ]; then \
+		echo ".env not found. Create it from .env.example"; \
+		exit 1; \
+	fi
+	@for key in JWT_ISSUER JWT_AUDIENCE JWT_PRIVATE_KEY_PEM JWT_PUBLIC_KEY_PEM; do \
+		if ! grep -q "^$$key=" .env; then \
+			echo "Missing required env var in .env: $$key"; \
+			exit 1; \
+		fi; \
+	done
+	uvicorn src.interface.http.main:app --host 0.0.0.0 --port 8000 --reload --env-file .env
+
+# ========================
+# API Contract
+# ========================
+
+openapi-export: ## Сгенерировать versioned OpenAPI artifact (openapi.yaml)
+	python scripts/export_openapi.py --output openapi.yaml
+
+openapi-check: ## Проверить, что openapi.yaml синхронизирован с кодом
+	python scripts/export_openapi.py --output openapi.yaml --check
+
+contract-provider: openapi-check test ## Проверка provider-контракта (OpenAPI + tests)
+
+# ========================
 # Pre-commit
 # ========================
 

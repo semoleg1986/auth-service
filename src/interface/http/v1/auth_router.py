@@ -51,7 +51,12 @@ def register(
     password_hasher: PasswordHasher = Depends(get_password_hasher),
 ):
     account = handle_register(
-        RegisterCommand(email=body.email, phone=body.phone, password=body.password),
+        RegisterCommand(
+            email=body.email,
+            phone=body.phone,
+            password=body.password,
+            org_id=body.org_id,
+        ),
         uow=uow,
         password_hasher=password_hasher,
     )

@@ -116,8 +116,11 @@ class FixedTime(TimeProvider):
 
 
 class SimpleTokenService(TokenService):
-    def issue_access_token(self, *, user_id: UUID, roles: list[str]) -> str:
-        return f"access:{user_id}:{','.join(roles)}"
+    def issue_access_token(
+        self, *, user_id: UUID, roles: list[str], org_id: str | None = None
+    ) -> str:
+        org_part = org_id or "-"
+        return f"access:{user_id}:{','.join(roles)}:{org_part}"
 
     def issue_refresh_token(self, *, token_id: UUID, user_id: UUID) -> str:
         return f"refresh:{token_id}:{user_id}"

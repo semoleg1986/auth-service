@@ -17,7 +17,9 @@ class JwtTokenService:
         else:
             self._kid = None
 
-    def issue_access_token(self, *, user_id: UUID, roles: list[str]) -> str:
+    def issue_access_token(
+        self, *, user_id: UUID, roles: list[str], org_id: str | None = None
+    ) -> str:
         now = datetime.now(timezone.utc)
         payload = {
             "sub": str(user_id),
@@ -27,6 +29,8 @@ class JwtTokenService:
             "iat": int(now.timestamp()),
             "exp": int(now.timestamp()) + self._settings.access_ttl_seconds,
         }
+        if org_id:
+            payload["org_id"] = org_id
         return jwt.encode(
             payload,
             self._settings.private_key_pem,

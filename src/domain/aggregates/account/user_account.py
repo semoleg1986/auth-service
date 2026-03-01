@@ -14,6 +14,7 @@ class UserAccount:
     user_id: UUID
     email: str | None = None
     phone: str | None = None
+    org_id: str | None = None
     status: AccountStatus = AccountStatus.ACTIVE
     roles: set[Role] = field(default_factory=set)
     credentials: list[Credential] = field(default_factory=list)

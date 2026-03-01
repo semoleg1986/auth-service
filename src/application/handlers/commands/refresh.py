@@ -49,7 +49,7 @@ def handle_refresh(
 
     role_names = sorted([r.name for r in account.roles])
     access_token = token_service.issue_access_token(
-        user_id=account.user_id, roles=role_names
+        user_id=account.user_id, roles=role_names, org_id=account.org_id
     )
 
     uow.commit()

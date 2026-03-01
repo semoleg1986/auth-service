@@ -11,9 +11,12 @@ class InMemoryTokenService:
     Use JWT with proper signing in production.
     """
 
-    def issue_access_token(self, *, user_id: UUID, roles: list[str]) -> str:
+    def issue_access_token(
+        self, *, user_id: UUID, roles: list[str], org_id: str | None = None
+    ) -> str:
         roles_str = ",".join(roles)
-        return f"access:{user_id}:{roles_str}"
+        org_part = org_id or "-"
+        return f"access:{user_id}:{roles_str}:{org_part}"
 
     def issue_refresh_token(self, *, token_id: UUID, user_id: UUID) -> str:
         return f"refresh:{token_id}:{user_id}"

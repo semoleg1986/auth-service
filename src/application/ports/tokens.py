@@ -5,7 +5,9 @@ from uuid import UUID
 
 
 class TokenService(Protocol):
-    def issue_access_token(self, *, user_id: UUID, roles: list[str]) -> str: ...
+    def issue_access_token(
+        self, *, user_id: UUID, roles: list[str], org_id: str | None = None
+    ) -> str: ...
 
     def issue_refresh_token(self, *, token_id: UUID, user_id: UUID) -> str: ...
 

@@ -43,7 +43,12 @@ def handle_register(
         if existing is not None:
             raise InvariantViolationError("User already exists")
 
-    account = UserAccount(user_id=uuid4(), email=command.email, phone=command.phone)
+    account = UserAccount(
+        user_id=uuid4(),
+        email=command.email,
+        phone=command.phone,
+        org_id=command.org_id,
+    )
     try:
         account.add_credential(
             Credential(

@@ -14,6 +14,7 @@
   - `user_id: UUID`
   - `email: str | None`
   - `phone: str | None`
+  - `org_id: str | None` (опциональная принадлежность к организации)
   - `status: active | blocked | deleted`
   - `roles: set[Role]`
 - **Behavior**:
@@ -84,3 +85,4 @@
 1. Access token не является сущностью домена.
 2. RefreshToken хранится и управляется доменом.
 3. Доменные сущности не знают о HTTP, JWT или инфраструктуре.
+4. `org_id` сохраняется как опциональный атрибут и может пробрасываться в access token без активации B2B-правил.
