@@ -1,4 +1,4 @@
-name: Provider Contract
+name: provider-contract
 
 on:
   pull_request:
@@ -37,6 +37,5 @@ jobs:
       - name: Check OpenAPI artifact is in sync
         run: make openapi-check
 
-      - name: Run tests (provider contract + behavior)
-        run: pytest -q -o addopts=''
-
+      - name: Run tests
+        run: make test
