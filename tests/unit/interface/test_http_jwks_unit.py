@@ -19,7 +19,11 @@ def _settings(*, algorithm: str) -> JwtSettings:
 
 
 def test_jwks_rejects_non_rs256(monkeypatch) -> None:
-    monkeypatch.setattr(jwks_module, "load_jwt_settings", lambda: _settings(algorithm="HS256"))
+    monkeypatch.setattr(
+        jwks_module,
+        "load_jwt_settings",
+        lambda: _settings(algorithm="HS256"),
+    )
     try:
         jwks_module.jwks()
         raise AssertionError("Expected HTTPException")
@@ -28,7 +32,11 @@ def test_jwks_rejects_non_rs256(monkeypatch) -> None:
 
 
 def test_jwks_returns_keys_for_rs256(monkeypatch) -> None:
-    monkeypatch.setattr(jwks_module, "load_jwt_settings", lambda: _settings(algorithm="RS256"))
+    monkeypatch.setattr(
+        jwks_module,
+        "load_jwt_settings",
+        lambda: _settings(algorithm="RS256"),
+    )
     monkeypatch.setattr(
         jwks_module,
         "build_jwk_with_kid",

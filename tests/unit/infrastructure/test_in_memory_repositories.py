@@ -4,12 +4,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from src.domain.aggregates.account import Session, UserAccount
-from src.infrastructure.persistence.repositories.in_memory_session_repository import (
-    InMemorySessionRepository,
-)
-from src.infrastructure.persistence.repositories.in_memory_user_account_repository import (
-    InMemoryUserAccountRepository,
-)
+from src.infrastructure import InMemorySessionRepository, InMemoryUserAccountRepository
 
 
 def test_user_account_repository_crud() -> None:

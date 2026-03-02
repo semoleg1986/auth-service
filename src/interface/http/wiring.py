@@ -13,9 +13,9 @@ from src.application.ports.tokens import TokenService
 from src.application.unit_of_work import UnitOfWork
 from src.domain.policies.access_policy import Actor
 from src.infrastructure.crypto.simple_hasher import SimplePasswordHasher
+from src.infrastructure.persistence.uow.in_memory_uow import InMemoryUnitOfWork
 from src.infrastructure.tokens.jwt_settings import load_jwt_settings
 from src.infrastructure.tokens.jwt_token_service import JwtTokenService
-from src.infrastructure.persistence.uow.in_memory_uow import InMemoryUnitOfWork
 
 _UOW = InMemoryUnitOfWork()
 _TOKEN_SERVICE: TokenService | None = None

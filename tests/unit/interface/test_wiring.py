@@ -34,4 +34,3 @@ def test_get_token_service_is_singleton(monkeypatch: pytest.MonkeyPatch) -> None
     first = wiring.get_token_service()
     second = wiring.get_token_service()
     assert first is second
-

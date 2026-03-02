@@ -27,4 +27,3 @@ def test_compute_kid_ignores_existing_kid() -> None:
     base_with_kid = {**base, "kid": "different"}
     kid_2 = compute_kid(base_with_kid)
     assert kid_1 == kid_2
-

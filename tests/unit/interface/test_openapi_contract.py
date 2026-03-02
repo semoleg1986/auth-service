@@ -35,4 +35,3 @@ def test_openapi_problem_json_contract_present(spec: dict) -> None:
 
     assert "application/problem+json" in login["responses"]["401"]["content"]
     assert "application/problem+json" in conflict["content"]
-

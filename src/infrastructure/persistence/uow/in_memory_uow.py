@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from src.application.unit_of_work import UnitOfWork
-from src.infrastructure.persistence.repositories.in_memory_session_repository import (
-    InMemorySessionRepository,
-)
-from src.infrastructure.persistence.repositories.in_memory_user_account_repository import (
+
+from ..repositories.in_memory_session_repository import InMemorySessionRepository
+from ..repositories.in_memory_user_account_repository import (
     InMemoryUserAccountRepository,
 )
 
