@@ -13,9 +13,9 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       JWT_ISSUER: auth-service
       JWT_AUDIENCE: user-children-service
-      JWT_ALGORITHMS: HS256
-      JWT_PRIVATE_KEY_PEM: dev-jwt-secret-please-change-32-bytes
-      JWT_PUBLIC_KEY_PEM: dev-jwt-secret-please-change-32-bytes
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      JWT_PRIVATE_KEY_PEM: ${JWT_PRIVATE_KEY_PEM}
+      JWT_PUBLIC_KEY_PEM: ${JWT_PUBLIC_KEY_PEM}
       JWT_ACCESS_TTL_SECONDS: 900
       JWT_REFRESH_TTL_SECONDS: 604800
       PROBLEM_TYPE_BASE_URL: https://example.com/problems
