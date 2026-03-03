@@ -12,3 +12,8 @@ fastapi
 uvicorn
 httpx
 dotenv
+sqlalchemy
+psycopg[binary]
+asyncpg
+alembic
+dishka

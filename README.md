@@ -20,6 +20,67 @@ make install
 make run
 ```
 
+## Последовательность запуска (локально, с внешним Postgres)
+1. Подготовить `.env` (JWT + `DATABASE_URL`).
+2. Активировать окружение и установить зависимости:
+```bash
+cd /Users/olegsemenov/Programming/monitoring/auth-service
+source .venv/bin/activate
+make install
+```
+3. Применить миграции:
+```bash
+make db-upgrade
+```
+4. Запустить сервис:
+```bash
+make run
+```
+5. Проверить health:
+```bash
+curl http://localhost:8000/healthz
+```
+6. Smoke auth flow:
+```bash
+curl -X POST http://localhost:8000/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"pass"}'
+```
+```bash
+curl -X POST http://localhost:8000/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"identifier":"user@example.com","password":"pass"}'
+```
+
+## Docker запуск
+```bash
+cd /Users/olegsemenov/Programming/monitoring/auth-service
+make docker-up
+```
+
+Перед запуском Docker обязательно задай `DATABASE_URL` (в `.env` или через export),
+так как Postgres вынесен во внешний сервис:
+
+```bash
+export DATABASE_URL=postgresql+asyncpg://auth_user:asawakan@<POSTGRES_HOST>:<POSTGRES_PORT>/auth_db
+```
+
+Остановка:
+```bash
+make docker-down
+```
+
+Логи:
+```bash
+make docker-logs
+```
+
+Последовательность в Docker:
+1. Указать `DATABASE_URL` на внешний Postgres
+2. Собрать и запустить контейнеры: `make docker-up`
+3. Проверить логи миграции/старта: `make docker-logs`
+4. Проверить health: `curl http://localhost:8000/healthz`
+
 ## Обязательные env
 - `JWT_ISSUER`
 - `JWT_AUDIENCE`
@@ -27,6 +88,31 @@ make run
 - `JWT_PUBLIC_KEY_PEM`
 
 Важно: PEM-ключи в `.env` должны быть в одну строку с `\n`.
+
+## Postgres (опционально)
+По умолчанию сервис работает с in-memory репозиториями.
+Чтобы включить PostgreSQL persistence, добавь `DATABASE_URL`:
+
+```env
+DATABASE_URL=postgresql+asyncpg://auth_user:asawakan@127.0.0.1:55432/auth_db
+```
+
+Текущая реализация автоматически нормализует
+`postgresql+asyncpg://` в `postgresql+psycopg://` для sync SQLAlchemy.
+
+### Миграции Alembic
+В сервис добавлен каталог миграций:
+- `/Users/olegsemenov/Programming/monitoring/auth-service/alembic`
+- `/Users/olegsemenov/Programming/monitoring/auth-service/alembic/versions`
+
+Команды:
+```bash
+make db-upgrade
+make db-downgrade
+make db-revision MSG="add something"
+```
+
+Важно: при включенном `DATABASE_URL` перед `make run` сначала выполни `make db-upgrade`.
 
 ## Контракт
 - OpenAPI: `/Users/olegsemenov/Programming/monitoring/auth-service/openapi.yaml`

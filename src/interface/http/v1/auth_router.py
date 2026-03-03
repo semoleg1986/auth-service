@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Response, status
+from dishka.integrations.fastapi import DishkaRoute, FromDishka
+from fastapi import APIRouter, Response, status
 
 from src.application.commands import (
     LoginCommand,
@@ -28,14 +29,8 @@ from src.interface.http.v1.schemas import (
     RegisterRequest,
     RegisterResponse,
 )
-from src.interface.http.wiring import (
-    get_password_hasher,
-    get_time_provider,
-    get_token_service,
-    get_uow,
-)
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["auth"], route_class=DishkaRoute)
 
 
 @router.post(
@@ -47,9 +42,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def register(
     body: RegisterRequest,
     response: Response,
-    uow: UnitOfWork = Depends(get_uow),
-    password_hasher: PasswordHasher = Depends(get_password_hasher),
-):
+    uow: FromDishka[UnitOfWork],
+    password_hasher: FromDishka[PasswordHasher],
+) -> RegisterResponse:
     account = handle_register(
         RegisterCommand(
             email=body.email,
@@ -72,11 +67,11 @@ def register(
 )
 def login(
     body: LoginRequest,
-    uow: UnitOfWork = Depends(get_uow),
-    password_hasher: PasswordHasher = Depends(get_password_hasher),
-    token_service: TokenService = Depends(get_token_service),
-    time_provider: TimeProvider = Depends(get_time_provider),
-):
+    uow: FromDishka[UnitOfWork],
+    password_hasher: FromDishka[PasswordHasher],
+    token_service: FromDishka[TokenService],
+    time_provider: FromDishka[TimeProvider],
+) -> LoginResponse:
     result = handle_login(
         LoginCommand(identifier=body.identifier, password=body.password),
         uow=uow,
@@ -102,10 +97,10 @@ def login(
 )
 def refresh(
     body: RefreshRequest,
-    uow: UnitOfWork = Depends(get_uow),
-    token_service: TokenService = Depends(get_token_service),
-    time_provider: TimeProvider = Depends(get_time_provider),
-):
+    uow: FromDishka[UnitOfWork],
+    token_service: FromDishka[TokenService],
+    time_provider: FromDishka[TimeProvider],
+) -> AuthTokensResponse:
     tokens = handle_refresh(
         RefreshCommand(refresh_token=body.refresh_token),
         uow=uow,
@@ -124,9 +119,9 @@ def refresh(
 )
 def logout(
     body: LogoutRequest,
-    uow: UnitOfWork = Depends(get_uow),
-    token_service: TokenService = Depends(get_token_service),
-):
+    uow: FromDishka[UnitOfWork],
+    token_service: FromDishka[TokenService],
+) -> None:
     handle_logout(
         LogoutCommand(refresh_token=body.refresh_token),
         uow=uow,

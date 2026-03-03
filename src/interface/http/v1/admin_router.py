@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from dishka.integrations.fastapi import DishkaRoute, FromDishka
+from fastapi import APIRouter, status
 
 from src.application.commands import (
     AssignRoleCommand,
@@ -18,9 +19,8 @@ from src.application.unit_of_work import UnitOfWork
 from src.domain.policies.access_policy import Actor
 from src.interface.http.v1.error_responses import ERROR_RESPONSES
 from src.interface.http.v1.schemas import AssignRoleRequest
-from src.interface.http.wiring import get_actor, get_uow
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(prefix="/admin", tags=["admin"], route_class=DishkaRoute)
 
 
 @router.post(
@@ -31,9 +31,9 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 def assign_role(
     user_id: UUID,
     body: AssignRoleRequest,
-    actor: Actor = Depends(get_actor),
-    uow: UnitOfWork = Depends(get_uow),
-):
+    actor: FromDishka[Actor],
+    uow: FromDishka[UnitOfWork],
+) -> None:
     handle_assign_role(
         AssignRoleCommand(user_id=user_id, role=body.role), uow=uow, actor=actor
     )
@@ -46,9 +46,9 @@ def assign_role(
 )
 def block_user(
     user_id: UUID,
-    actor: Actor = Depends(get_actor),
-    uow: UnitOfWork = Depends(get_uow),
-):
+    actor: FromDishka[Actor],
+    uow: FromDishka[UnitOfWork],
+) -> None:
     handle_block_user(BlockUserCommand(user_id=user_id), uow=uow, actor=actor)
 
 
@@ -59,7 +59,7 @@ def block_user(
 )
 def unblock_user(
     user_id: UUID,
-    actor: Actor = Depends(get_actor),
-    uow: UnitOfWork = Depends(get_uow),
-):
+    actor: FromDishka[Actor],
+    uow: FromDishka[UnitOfWork],
+) -> None:
     handle_unblock_user(UnblockUserCommand(user_id=user_id), uow=uow, actor=actor)

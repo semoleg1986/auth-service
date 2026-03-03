@@ -1,0 +1,15 @@
+.git
+.gitignore
+.idea
+.venv
+.mypy_cache
+.pytest_cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.coverage
+htmlcov
+tests
+docs
+openapi.yaml

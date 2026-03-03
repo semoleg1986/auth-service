@@ -46,6 +46,28 @@ run: ## Запустить HTTP сервис (uvicorn)
 	done
 	uvicorn src.interface.http.main:app --host 0.0.0.0 --port 8000 --reload --env-file .env
 
+docker-up: ## Запустить auth-service + postgres через Docker Compose
+	docker compose up --build -d
+
+docker-down: ## Остановить Docker Compose окружение
+	docker compose down
+
+docker-logs: ## Показать логи Docker Compose
+	docker compose logs -f --tail=200
+
+db-upgrade: ## Применить миграции Alembic до head
+	alembic upgrade head
+
+db-downgrade: ## Откатить миграции Alembic на 1 шаг
+	alembic downgrade -1
+
+db-revision: ## Создать новую ревизию Alembic (пример: make db-revision MSG=\"add table\")
+	@if [ -z "$(MSG)" ]; then \
+		echo "Usage: make db-revision MSG='your message'"; \
+		exit 1; \
+	fi
+	alembic revision -m "$(MSG)"
+
 # ========================
 # API Contract
 # ========================
