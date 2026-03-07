@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from uuid import UUID
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 @dataclass
@@ -23,9 +27,14 @@ class Session:
     token_id: UUID
     user_id: UUID
     expires_at: datetime
+    created_at: datetime = field(default_factory=_utcnow)
+    updated_at: datetime = field(default_factory=_utcnow)
     revoked_at: datetime | None = None
+    revoke_reason: str | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
 
-    def revoke(self, *, at: datetime) -> None:
+    def revoke(self, *, at: datetime, reason: str | None = None) -> None:
         """
         Отозвать сессию.
 
@@ -33,6 +42,8 @@ class Session:
         :type at: datetime
         """
         self.revoked_at = at
+        self.revoke_reason = reason
+        self.updated_at = at
 
     def is_active(self, *, now: datetime) -> bool:
         """

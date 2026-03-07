@@ -19,7 +19,12 @@ class SqlAlchemySessionRepository:
             token_id=model.token_id,
             user_id=model.user_id,
             expires_at=model.expires_at,
+            created_at=model.created_at,
+            updated_at=model.updated_at,
             revoked_at=model.revoked_at,
+            revoke_reason=model.revoke_reason,
+            ip_address=model.ip_address,
+            user_agent=model.user_agent,
         )
 
     def get_by_id(self, token_id: UUID) -> Session | None:
@@ -31,18 +36,28 @@ class SqlAlchemySessionRepository:
     def save(self, session: Session) -> None:
         model = self._db.get(SessionModel, session.token_id)
         if model is None:
-            model = SessionModel(token_id=session.token_id)
+            model = SessionModel(
+                token_id=session.token_id,
+                created_at=session.created_at,
+            )
             self._db.add(model)
 
         model.user_id = session.user_id
+        model.updated_at = session.updated_at
         model.expires_at = session.expires_at
         model.revoked_at = session.revoked_at
+        model.revoke_reason = session.revoke_reason
+        model.ip_address = session.ip_address
+        model.user_agent = session.user_agent
 
     def revoke(self, token_id: UUID) -> None:
         model = self._db.get(SessionModel, token_id)
         if model is None:
             return
-        model.revoked_at = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc)
+        model.revoked_at = now
+        model.updated_at = now
+        model.revoke_reason = "logout"
 
     def list_by_user(self, user_id: UUID) -> list[Session]:
         rows = self._db.execute(

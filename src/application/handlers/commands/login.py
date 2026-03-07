@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import timedelta
 from uuid import uuid4
 
@@ -59,17 +60,26 @@ def handle_login(
     if not password_hasher.verify(command.password, password_cred.secret_hash):
         raise AuthenticationError("Invalid credentials")
 
+    now = time_provider.now()
+    account.mark_login(at=now)
+    account.credentials = [
+        replace(c, last_used_at=now, updated_at=now)
+        if c.credential_id == password_cred.credential_id
+        else c
+        for c in account.credentials
+    ]
+
     role_names = sorted([r.name for r in account.roles])
     access_token = token_service.issue_access_token(
         user_id=account.user_id, roles=role_names, org_id=account.org_id
     )
 
-    now = time_provider.now()
     session = Session(
         token_id=uuid4(),
         user_id=account.user_id,
         expires_at=now + timedelta(seconds=refresh_ttl_seconds),
     )
+    uow.user_repo.save(account)
     uow.session_repo.save(session)
 
     refresh_token = token_service.issue_refresh_token(

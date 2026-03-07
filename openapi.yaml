@@ -169,6 +169,17 @@
             ],
             "title": "Email"
           },
+          "org_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Org Id"
+          },
           "password": {
             "title": "Password",
             "type": "string"
@@ -206,6 +217,13 @@
       },
       "ValidationError": {
         "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
           "loc": {
             "items": {
               "anyOf": [
@@ -327,38 +345,6 @@
               "title": "User Id",
               "type": "string"
             }
-          },
-          {
-            "in": "header",
-            "name": "X-Actor-Id",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Actor-Id"
-            }
-          },
-          {
-            "in": "header",
-            "name": "X-Actor-Admin",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Actor-Admin"
-            }
           }
         ],
         "responses": {
@@ -475,38 +461,6 @@
               "format": "uuid",
               "title": "User Id",
               "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "X-Actor-Id",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Actor-Id"
-            }
-          },
-          {
-            "in": "header",
-            "name": "X-Actor-Admin",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Actor-Admin"
             }
           }
         ],
@@ -634,38 +588,6 @@
               "format": "uuid",
               "title": "User Id",
               "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "X-Actor-Id",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Actor-Id"
-            }
-          },
-          {
-            "in": "header",
-            "name": "X-Actor-Admin",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Actor-Admin"
             }
           }
         ],

@@ -1,7 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from uuid import UUID
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 @dataclass(frozen=True)
@@ -26,3 +31,9 @@ class Credential:
     secret_hash: str | None = None
     provider: str | None = None
     provider_user_id: str | None = None
+    created_at: datetime = field(default_factory=_utcnow)
+    updated_at: datetime = field(default_factory=_utcnow)
+    last_used_at: datetime | None = None
+    password_changed_at: datetime | None = None
+    failed_attempts: int = 0
+    locked_until: datetime | None = None
