@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import select
@@ -25,6 +26,12 @@ class SqlAlchemyUserAccountRepository:
             phone=model.phone,
             org_id=model.org_id,
             status=AccountStatus(model.status),
+            created_at=model.created_at,
+            updated_at=model.updated_at,
+            version=model.version,
+            last_login_at=model.last_login_at,
+            blocked_at=model.blocked_at,
+            status_reason=model.status_reason,
             roles={Role(name=item.role_name) for item in model.roles},
             credentials=[
                 Credential(
@@ -33,6 +40,12 @@ class SqlAlchemyUserAccountRepository:
                     secret_hash=item.secret_hash,
                     provider=item.provider,
                     provider_user_id=item.provider_user_id,
+                    created_at=item.created_at,
+                    updated_at=item.updated_at,
+                    last_used_at=item.last_used_at,
+                    password_changed_at=item.password_changed_at,
+                    failed_attempts=item.failed_attempts,
+                    locked_until=item.locked_until,
                 )
                 for item in model.credentials
             ],
@@ -71,16 +84,27 @@ class SqlAlchemyUserAccountRepository:
     def save(self, account: UserAccount) -> None:
         model = self._db.get(UserAccountModel, account.user_id)
         if model is None:
+            now = datetime.now(timezone.utc)
             model = UserAccountModel(
                 user_id=account.user_id,
                 status=account.status.value,
+                created_at=account.created_at,
+                updated_at=account.updated_at,
+                version=account.version,
             )
             self._db.add(model)
+        else:
+            now = datetime.now(timezone.utc)
 
         model.email = account.email
         model.phone = account.phone
         model.org_id = account.org_id
         model.status = account.status.value
+        model.last_login_at = account.last_login_at
+        model.blocked_at = account.blocked_at
+        model.status_reason = account.status_reason
+        model.updated_at = now
+        model.version = account.version + 1
 
         model.credentials = [
             CredentialModel(
@@ -90,6 +114,12 @@ class SqlAlchemyUserAccountRepository:
                 secret_hash=item.secret_hash,
                 provider=item.provider,
                 provider_user_id=item.provider_user_id,
+                created_at=item.created_at,
+                updated_at=item.updated_at,
+                last_used_at=item.last_used_at,
+                password_changed_at=item.password_changed_at,
+                failed_attempts=item.failed_attempts,
+                locked_until=item.locked_until,
             )
             for item in account.credentials
         ]
@@ -97,3 +127,6 @@ class SqlAlchemyUserAccountRepository:
             UserRoleModel(user_id=account.user_id, role_name=role.name)
             for role in sorted(account.roles, key=lambda r: r.name)
         ]
+
+        account.updated_at = model.updated_at
+        account.version = model.version
