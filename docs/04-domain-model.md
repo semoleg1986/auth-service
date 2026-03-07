@@ -13,6 +13,12 @@
   - `phone: str | None`
   - `org_id: str | None` (опциональная принадлежность к организации)
   - `status: active | blocked | deleted`
+  - `created_at: datetime`
+  - `updated_at: datetime`
+  - `version: int`
+  - `last_login_at: datetime | None`
+  - `blocked_at: datetime | None`
+  - `status_reason: str | None`
   - `roles: set[Role]`
 - **Поведение**:
   - `register(credentials)`
@@ -32,6 +38,12 @@
   - `credential_id: UUID`
   - `type: password | oauth`
   - `hash: str` (для password)
+  - `created_at: datetime`
+  - `updated_at: datetime`
+  - `last_used_at: datetime | None`
+  - `password_changed_at: datetime | None`
+  - `failed_attempts: int`
+  - `locked_until: datetime | None`
 - **Инварианты**:
   - хранится только хеш
   - нельзя иметь два одинаковых credential одного типа
@@ -40,8 +52,13 @@
 - **Атрибуты**:
   - `token_id: UUID`
   - `user_id: UUID`
+  - `created_at: datetime`
+  - `updated_at: datetime`
   - `expires_at: datetime`
   - `revoked_at: datetime | None`
+  - `revoke_reason: str | None`
+  - `ip_address: str | None`
+  - `user_agent: str | None`
 - **Поведение**:
   - `revoke()`
   - `is_active(now)`
