@@ -13,6 +13,8 @@
 5. **Refresh Revocation**: отозванный refresh не может быть использован.
 6. **Role Assignment**: роль присваивается только через Admin policy.
 7. **Optional Organization**: `org_id` может отсутствовать; отсутствие `org_id` означает B2C-сценарий.
+8. **Audit Metadata**: успешный логин обновляет `last_login_at` аккаунта и `last_used_at` password-credential.
+9. **Session Revoke Trace**: отзыв сессии фиксирует `revoke_reason` и `updated_at`.
 
 ## Политики
 

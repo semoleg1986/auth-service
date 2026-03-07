@@ -5,6 +5,7 @@ on:
     paths:
       - "src/**"
       - "tests/**"
+      - "docs/**"
       - "scripts/export_openapi.py"
       - "openapi.yaml"
       - "requirements*.txt"
