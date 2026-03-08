@@ -21,10 +21,10 @@
   - `status_reason: str | None`
   - `roles: set[Role]`
 - **Поведение**:
-  - `register(credentials)`
   - `assign_role(role)`
+  - `remove_role(role)`
   - `block()` / `unblock()`
-  - `change_email()` / `change_phone()`
+  - `mark_login()`
 - **Инварианты**:
   - хотя бы один идентификатор (email или phone)
   - уникальность email/phone
@@ -37,7 +37,9 @@
 - **Атрибуты**:
   - `credential_id: UUID`
   - `type: password | oauth`
-  - `hash: str` (для password)
+  - `secret_hash: str | None` (для password)
+  - `provider: str | None` (для oauth)
+  - `provider_user_id: str | None` (для oauth)
   - `created_at: datetime`
   - `updated_at: datetime`
   - `last_used_at: datetime | None`
