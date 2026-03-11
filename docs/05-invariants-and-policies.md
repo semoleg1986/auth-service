@@ -11,10 +11,12 @@
 3. **Blocked User**: заблокированный пользователь не может логиниться.
 4. **Refresh Validity**: refresh token не может использоваться после истечения.
 5. **Refresh Revocation**: отозванный refresh не может быть использован.
-6. **Role Assignment**: роль присваивается только через Admin policy.
-7. **Optional Organization**: `org_id` может отсутствовать; отсутствие `org_id` означает B2C-сценарий.
-8. **Audit Metadata**: успешный логин обновляет `last_login_at` аккаунта и `last_used_at` password-credential.
-9. **Session Revoke Trace**: отзыв сессии фиксирует `revoke_reason` и `updated_at`.
+6. **Refresh Rotation**: при refresh старая session помечается `rotated`, создается новая session и новый refresh token.
+7. **Refresh Reuse Detection**: повторное использование уже ротированного refresh токена ведет к revoke всех активных сессий пользователя.
+8. **Role Assignment**: роль присваивается только через Admin policy и только из канонического списка ролей.
+9. **Optional Organization**: `org_id` может отсутствовать; отсутствие `org_id` означает B2C-сценарий.
+10. **Audit Metadata**: успешный логин обновляет `last_login_at` аккаунта и `last_used_at` password-credential.
+11. **Session Revoke Trace**: отзыв сессии фиксирует `revoke_reason` и `updated_at`.
 
 ## Политики
 
@@ -25,6 +27,8 @@
 | can_assign_role | Admin может назначать роли | Admin | Application Layer |
 | can_block_user | Admin может блокировать | Admin | Application Layer |
 | can_unblock_user | Admin может разблокировать | Admin | Application Layer |
+| can_view_roles | Просмотр ролей пользователя | Self/Admin/Auditor/Support | Application Layer |
+| can_view_sessions | Просмотр сессий пользователя | Self/Admin/Auditor/Support | Application Layer |
 
 ### Пользовательские политики
 

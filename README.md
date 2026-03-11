@@ -5,13 +5,23 @@
 ## Что реализовано
 - регистрация: `POST /v1/auth/register`
 - логин: `POST /v1/auth/login`
-- refresh: `POST /v1/auth/refresh`
+- refresh (rotation): `POST /v1/auth/refresh`
 - logout (revoke refresh): `POST /v1/auth/logout`
 - JWKS: `GET /.well-known/jwks.json`
 - admin операции:
   - `POST /v1/admin/users/{user_id}/roles`
+  - `GET /v1/admin/users/{user_id}/roles`
   - `POST /v1/admin/users/{user_id}/block`
   - `POST /v1/admin/users/{user_id}/unblock`
+  - `GET /v1/admin/users/{user_id}/sessions`
+  - `POST /v1/admin/users/{user_id}/sessions/{token_id}/revoke`
+
+## Безопасность (текущее поведение)
+- password hashing: Argon2 (+ fallback verify для legacy hash)
+- refresh-token rotation на каждом `refresh`
+- reuse-detection: повторный refresh старым токеном отзывает все активные сессии пользователя
+- admin endpoints требуют Bearer access token и проверку ролей
+- role model: `user`, `admin`, `content_manager`, `auditor`, `support`
 
 ## Быстрый запуск
 ```bash
@@ -123,6 +133,6 @@ make contract-provider
 ```
 
 ## Статус
-Подтвержден в e2e smoke (`5/5`):
+Подтвержден в e2e smoke (`6/6`):
 - login/refresh/logout lifecycle
 - доступ админа и user флоу через web-клиенты

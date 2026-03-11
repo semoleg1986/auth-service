@@ -67,7 +67,7 @@
 
 ### 4. Role (Value Object)
 - **Атрибуты**:
-  - `name: str` (например, admin, user)
+  - `name: str` (`user | admin | content_manager | auditor | support`)
 - **Правила**:
   - присваивается через политики
 
@@ -82,6 +82,8 @@
   - `get_by_id(token_id)`
   - `save(session)`
   - `revoke(token_id)`
+  - `list_by_user(user_id)`
+  - `revoke_all_by_user(user_id, reason)`
 
 ## Примечания
 
