@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass, field, replace
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from src.domain.errors import InvariantViolationError
@@ -93,8 +93,65 @@ class UserAccount:
         :type credential: Credential
         :raises InvariantViolationError: Если тип credential не поддержан/существует.
         """
-        if credential.type not in {"password", "oauth"}:
-            raise InvariantViolationError("Unsupported credential type")
         if any(c.type == credential.type for c in self.credentials):
             raise InvariantViolationError("Credential type already exists")
         self.credentials.append(credential)
+
+    def get_password_credential(self) -> Credential | None:
+        return next((c for c in self.credentials if c.type == "password"), None)
+
+    def is_password_locked(self, *, at: datetime | None = None) -> bool:
+        credential = self.get_password_credential()
+        if credential is None or credential.locked_until is None:
+            return False
+        now = at or _utcnow()
+        return credential.locked_until > now
+
+    def register_failed_password_attempt(
+        self,
+        *,
+        at: datetime | None = None,
+        lock_threshold: int = 5,
+        lock_ttl_seconds: int = 900,
+    ) -> None:
+        credential = self.get_password_credential()
+        if credential is None:
+            raise InvariantViolationError("Password credential not found")
+        now = at or _utcnow()
+        next_failed = credential.failed_attempts + 1
+        locked_until = credential.locked_until
+        if next_failed >= lock_threshold:
+            locked_until = now + timedelta(seconds=lock_ttl_seconds)
+        self._replace_credential(
+            replace(
+                credential,
+                failed_attempts=next_failed,
+                locked_until=locked_until,
+                updated_at=now,
+            )
+        )
+        self.updated_at = now
+
+    def register_successful_password_login(self, *, at: datetime | None = None) -> None:
+        credential = self.get_password_credential()
+        if credential is None:
+            raise InvariantViolationError("Password credential not found")
+        now = at or _utcnow()
+        self._replace_credential(
+            replace(
+                credential,
+                failed_attempts=0,
+                locked_until=None,
+                last_used_at=now,
+                updated_at=now,
+            )
+        )
+        self.updated_at = now
+
+    def _replace_credential(self, updated_credential: Credential) -> None:
+        self.credentials = [
+            updated_credential
+            if credential.credential_id == updated_credential.credential_id
+            else credential
+            for credential in self.credentials
+        ]

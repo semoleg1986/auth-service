@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
@@ -56,6 +57,21 @@ def test_add_password_credential() -> None:
     assert cred in account.credentials
 
 
+def test_password_credential_requires_secret_hash() -> None:
+    with pytest.raises(InvariantViolationError, match="requires secret_hash"):
+        Credential(credential_id=uuid4(), type="password", secret_hash=None)
+
+
+def test_password_credential_forbids_oauth_fields() -> None:
+    with pytest.raises(InvariantViolationError, match="cannot have oauth provider"):
+        Credential(
+            credential_id=uuid4(),
+            type="password",
+            secret_hash="hash",
+            provider="google",
+        )
+
+
 def test_add_oauth_credential() -> None:
     account = UserAccount(user_id=uuid4(), email="user@example.com")
     cred = Credential(
@@ -68,11 +84,30 @@ def test_add_oauth_credential() -> None:
     assert cred in account.credentials
 
 
+def test_oauth_credential_requires_provider_fields() -> None:
+    with pytest.raises(InvariantViolationError, match="requires provider"):
+        Credential(
+            credential_id=uuid4(),
+            type="oauth",
+            provider="google",
+            provider_user_id=None,
+        )
+
+
+def test_oauth_credential_forbids_secret_hash() -> None:
+    with pytest.raises(InvariantViolationError, match="cannot have secret_hash"):
+        Credential(
+            credential_id=uuid4(),
+            type="oauth",
+            provider="google",
+            provider_user_id="42",
+            secret_hash="hash",
+        )
+
+
 def test_add_unsupported_credential_type_raises() -> None:
-    account = UserAccount(user_id=uuid4(), email="user@example.com")
-    cred = Credential(credential_id=uuid4(), type="magic")
     with pytest.raises(InvariantViolationError, match="Unsupported credential type"):
-        account.add_credential(cred)
+        Credential(credential_id=uuid4(), type="magic")
 
 
 def test_add_duplicate_credential_type_raises() -> None:
@@ -84,3 +119,62 @@ def test_add_duplicate_credential_type_raises() -> None:
         account.add_credential(
             Credential(credential_id=uuid4(), type="password", secret_hash="hash2")
         )
+
+
+def test_failed_password_attempt_increments_counter() -> None:
+    account = UserAccount(user_id=uuid4(), email="user@example.com")
+    account.add_credential(
+        Credential(credential_id=uuid4(), type="password", secret_hash="hash")
+    )
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    account.register_failed_password_attempt(at=now)
+
+    credential = account.get_password_credential()
+    assert credential is not None
+    assert credential.failed_attempts == 1
+    assert credential.locked_until is None
+
+
+def test_failed_password_attempt_locks_after_threshold() -> None:
+    account = UserAccount(user_id=uuid4(), email="user@example.com")
+    account.add_credential(
+        Credential(
+            credential_id=uuid4(),
+            type="password",
+            secret_hash="hash",
+            failed_attempts=4,
+        )
+    )
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    account.register_failed_password_attempt(
+        at=now,
+        lock_threshold=5,
+        lock_ttl_seconds=600,
+    )
+
+    credential = account.get_password_credential()
+    assert credential is not None
+    assert credential.failed_attempts == 5
+    assert credential.locked_until == datetime(2026, 1, 1, 0, 10, tzinfo=timezone.utc)
+    assert account.is_password_locked(at=now) is True
+
+
+def test_successful_password_login_resets_lock_and_counter() -> None:
+    account = UserAccount(user_id=uuid4(), email="user@example.com")
+    account.add_credential(
+        Credential(
+            credential_id=uuid4(),
+            type="password",
+            secret_hash="hash",
+            failed_attempts=3,
+            locked_until=datetime(2026, 1, 1, 0, 5, tzinfo=timezone.utc),
+        )
+    )
+    now = datetime(2026, 1, 1, 0, 1, tzinfo=timezone.utc)
+    account.register_successful_password_login(at=now)
+
+    credential = account.get_password_credential()
+    assert credential is not None
+    assert credential.failed_attempts == 0
+    assert credential.locked_until is None
+    assert credential.last_used_at == now

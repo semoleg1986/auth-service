@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import replace
 from datetime import timedelta
 from uuid import uuid4
 
@@ -23,6 +22,8 @@ def handle_login(
     token_service: TokenService,
     time_provider: TimeProvider,
     refresh_ttl_seconds: int,
+    lock_threshold: int = 5,
+    lock_ttl_seconds: int = 900,
 ) -> LoginResult:
     """
     Выполнить логин и выдать токены.
@@ -53,21 +54,28 @@ def handle_login(
     if not AccessPolicy.can_login(account):
         raise AuthenticationError("Account is blocked")
 
-    password_cred = next((c for c in account.credentials if c.type == "password"), None)
+    now = time_provider.now()
+    password_cred = account.get_password_credential()
     if password_cred is None or not password_cred.secret_hash:
         raise AuthenticationError("Invalid credentials")
 
+    if account.is_password_locked(at=now):
+        raise AuthenticationError("Credential is temporarily locked")
+
     if not password_hasher.verify(command.password, password_cred.secret_hash):
+        account.register_failed_password_attempt(
+            at=now,
+            lock_threshold=lock_threshold,
+            lock_ttl_seconds=lock_ttl_seconds,
+        )
+        uow.user_repo.save(account)
+        uow.commit()
+        if account.is_password_locked(at=now):
+            raise AuthenticationError("Too many failed attempts. Try later")
         raise AuthenticationError("Invalid credentials")
 
-    now = time_provider.now()
     account.mark_login(at=now)
-    account.credentials = [
-        replace(c, last_used_at=now, updated_at=now)
-        if c.credential_id == password_cred.credential_id
-        else c
-        for c in account.credentials
-    ]
+    account.register_successful_password_login(at=now)
 
     role_names = sorted([r.name for r in account.roles])
     access_token = token_service.issue_access_token(

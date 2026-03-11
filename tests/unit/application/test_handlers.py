@@ -241,6 +241,10 @@ def test_login_success(
     assert result.user_id == str(account.user_id)
     assert result.tokens.access_token.startswith("access:")
     assert result.tokens.refresh_token.startswith("refresh:")
+    password_credential = account.get_password_credential()
+    assert password_credential is not None
+    assert password_credential.failed_attempts == 0
+    assert password_credential.last_used_at == time_provider.now()
     assert uow.committed is True
 
 
@@ -258,9 +262,80 @@ def test_login_invalid_password_raises(
     )
     uow.user_repo.save(account)
 
-    with pytest.raises(AuthenticationError):
+    with pytest.raises(AuthenticationError, match="Invalid credentials"):
         handle_login(
             LoginCommand(identifier="user@example.com", password="wrong"),
+            uow=uow,
+            password_hasher=hasher,
+            token_service=tokens,
+            time_provider=time_provider,
+            refresh_ttl_seconds=3600,
+        )
+    password_credential = account.get_password_credential()
+    assert password_credential is not None
+    assert password_credential.failed_attempts == 1
+    assert password_credential.locked_until is None
+    assert uow.committed is True
+
+
+def test_login_locks_credential_after_threshold(
+    uow: InMemoryUoW,
+    hasher: SimpleHasher,
+    tokens: SimpleTokenService,
+    time_provider: FixedTime,
+) -> None:
+    account = UserAccount(user_id=uuid4(), email="user@example.com")
+    account.add_credential(
+        Credential(
+            credential_id=uuid4(),
+            type="password",
+            secret_hash=hasher.hash("pass"),
+            failed_attempts=4,
+        )
+    )
+    uow.user_repo.save(account)
+
+    with pytest.raises(AuthenticationError, match="Too many failed attempts"):
+        handle_login(
+            LoginCommand(identifier="user@example.com", password="wrong"),
+            uow=uow,
+            password_hasher=hasher,
+            token_service=tokens,
+            time_provider=time_provider,
+            refresh_ttl_seconds=3600,
+            lock_threshold=5,
+            lock_ttl_seconds=600,
+        )
+
+    password_credential = account.get_password_credential()
+    assert password_credential is not None
+    assert password_credential.failed_attempts == 5
+    assert password_credential.locked_until == datetime(
+        2024, 1, 1, 0, 10, tzinfo=timezone.utc
+    )
+
+
+def test_login_rejects_locked_credential(
+    uow: InMemoryUoW,
+    hasher: SimpleHasher,
+    tokens: SimpleTokenService,
+    time_provider: FixedTime,
+) -> None:
+    account = UserAccount(user_id=uuid4(), email="user@example.com")
+    account.add_credential(
+        Credential(
+            credential_id=uuid4(),
+            type="password",
+            secret_hash=hasher.hash("pass"),
+            failed_attempts=5,
+            locked_until=datetime(2024, 1, 1, 0, 30, tzinfo=timezone.utc),
+        )
+    )
+    uow.user_repo.save(account)
+
+    with pytest.raises(AuthenticationError, match="temporarily locked"):
+        handle_login(
+            LoginCommand(identifier="user@example.com", password="pass"),
             uow=uow,
             password_hasher=hasher,
             token_service=tokens,
