@@ -6,7 +6,7 @@ import pytest
 
 from src.domain.aggregates.account import Credential, UserAccount
 from src.domain.errors import InvariantViolationError
-from src.domain.value_objects import AccountStatus, Role
+from src.domain.value_objects import ROLE_ADMIN, AccountStatus, Role
 
 
 def test_user_account_requires_email_or_phone() -> None:
@@ -28,11 +28,17 @@ def test_user_account_accepts_phone() -> None:
 
 def test_assign_and_remove_role() -> None:
     account = UserAccount(user_id=uuid4(), email="user@example.com")
-    role = Role(name="admin")
+    role = Role(name=ROLE_ADMIN)
     account.assign_role(role)
     assert role in account.roles
     account.remove_role(role)
     assert role not in account.roles
+
+
+def test_assign_unsupported_role_raises() -> None:
+    account = UserAccount(user_id=uuid4(), email="user@example.com")
+    with pytest.raises(InvariantViolationError, match="Unsupported role"):
+        account.assign_role(Role(name="methodist"))
 
 
 def test_block_and_unblock() -> None:

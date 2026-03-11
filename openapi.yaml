@@ -4,6 +4,13 @@
       "AssignRoleRequest": {
         "properties": {
           "role": {
+            "enum": [
+              "user",
+              "admin",
+              "content_manager",
+              "auditor",
+              "support"
+            ],
             "title": "Role",
             "type": "string"
           }
@@ -217,13 +224,6 @@
       },
       "ValidationError": {
         "properties": {
-          "ctx": {
-            "title": "Context",
-            "type": "object"
-          },
-          "input": {
-            "title": "Input"
-          },
           "loc": {
             "items": {
               "anyOf": [

@@ -9,7 +9,7 @@ from src.application.ports.crypto import PasswordHasher
 from src.application.unit_of_work import UnitOfWork
 from src.domain.aggregates.account import Credential, UserAccount
 from src.domain.errors import InvariantViolationError as DomainInvariantError
-from src.domain.value_objects import Role
+from src.domain.value_objects import ROLE_ADMIN, ROLE_USER, Role
 
 
 def handle_register(
@@ -57,7 +57,7 @@ def handle_register(
                 secret_hash=password_hasher.hash(command.password),
             )
         )
-        account.assign_role(Role(name="user"))
+        account.assign_role(Role(name=ROLE_USER))
         bootstrap_email = os.getenv("BOOTSTRAP_ADMIN_EMAIL", "").strip().lower()
         bootstrap_phone = os.getenv("BOOTSTRAP_ADMIN_PHONE", "").strip()
         if (
@@ -65,9 +65,9 @@ def handle_register(
             and command.email
             and command.email.lower() == bootstrap_email
         ):
-            account.assign_role(Role(name="admin"))
+            account.assign_role(Role(name=ROLE_ADMIN))
         if bootstrap_phone and command.phone and command.phone == bootstrap_phone:
-            account.assign_role(Role(name="admin"))
+            account.assign_role(Role(name=ROLE_ADMIN))
     except DomainInvariantError as exc:
         raise InvariantViolationError(str(exc)) from exc
 

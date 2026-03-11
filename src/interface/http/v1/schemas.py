@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel
 
 
@@ -24,7 +26,7 @@ class LogoutRequest(BaseModel):
 
 
 class AssignRoleRequest(BaseModel):
-    role: str
+    role: Literal["user", "admin", "content_manager", "auditor", "support"]
 
 
 class AuthTokensResponse(BaseModel):

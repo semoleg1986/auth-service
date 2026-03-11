@@ -39,7 +39,7 @@ from src.application.queries import ListRoleAssignmentsQuery, ListSessionsQuery
 from src.application.unit_of_work import UnitOfWork
 from src.domain.aggregates.account import Credential, Session, UserAccount
 from src.domain.policies.access_policy import Actor
-from src.domain.value_objects import AccountStatus, Role
+from src.domain.value_objects import ROLE_ADMIN, AccountStatus, Role
 
 
 @dataclass
@@ -354,11 +354,11 @@ def test_assign_role_admin_only(uow: InMemoryUoW) -> None:
 
     admin = Actor(user_id=uuid4(), is_admin=True)
     handle_assign_role(
-        AssignRoleCommand(user_id=account.user_id, role="admin"),
+        AssignRoleCommand(user_id=account.user_id, role=ROLE_ADMIN),
         uow=uow,
         actor=admin,
     )
-    assert Role(name="admin") in account.roles
+    assert Role(name=ROLE_ADMIN) in account.roles
 
     user = Actor(user_id=uuid4(), is_admin=False)
     with pytest.raises(AccessDeniedError):
@@ -366,6 +366,19 @@ def test_assign_role_admin_only(uow: InMemoryUoW) -> None:
             AssignRoleCommand(user_id=account.user_id, role="mod"),
             uow=uow,
             actor=user,
+        )
+
+
+def test_assign_role_rejects_unknown_role(uow: InMemoryUoW) -> None:
+    account = UserAccount(user_id=uuid4(), email="user@example.com")
+    uow.user_repo.save(account)
+    admin = Actor(user_id=uuid4(), is_admin=True)
+
+    with pytest.raises(InvariantViolationError, match="Unsupported role"):
+        handle_assign_role(
+            AssignRoleCommand(user_id=account.user_id, role="methodist"),
+            uow=uow,
+            actor=admin,
         )
 
 

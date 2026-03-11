@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 from src.application.commands.assign_role import AssignRoleCommand
-from src.application.errors import AccessDeniedError, NotFoundError
+from src.application.errors import (
+    AccessDeniedError,
+    InvariantViolationError,
+    NotFoundError,
+)
 from src.application.unit_of_work import UnitOfWork
+from src.domain.errors import InvariantViolationError as DomainInvariantError
 from src.domain.policies.access_policy import AccessPolicy, Actor
 from src.domain.value_objects import Role
 
@@ -34,6 +39,9 @@ def handle_assign_role(
     if not AccessPolicy.can_assign_role(actor, account):
         raise AccessDeniedError("Access denied")
 
-    account.assign_role(Role(name=command.role))
+    try:
+        account.assign_role(Role(name=command.role))
+    except DomainInvariantError as exc:
+        raise InvariantViolationError(str(exc)) from exc
     uow.user_repo.save(account)
     uow.commit()

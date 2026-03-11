@@ -35,3 +35,14 @@ def test_openapi_problem_json_contract_present(spec: dict) -> None:
 
     assert "application/problem+json" in login["responses"]["401"]["content"]
     assert "application/problem+json" in conflict["content"]
+
+
+def test_openapi_assign_role_has_canonical_enum(spec: dict) -> None:
+    schema = spec["components"]["schemas"]["AssignRoleRequest"]["properties"]["role"]
+    assert schema["enum"] == [
+        "user",
+        "admin",
+        "content_manager",
+        "auditor",
+        "support",
+    ]
