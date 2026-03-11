@@ -5,6 +5,7 @@ from uuid import UUID
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, status
 
+from src.application.actor_context import ActorContext
 from src.application.commands import (
     AssignRoleCommand,
     BlockUserCommand,
@@ -22,7 +23,6 @@ from src.application.handlers import (
 from src.application.ports.time import TimeProvider
 from src.application.queries import ListRoleAssignmentsQuery, ListSessionsQuery
 from src.application.unit_of_work import UnitOfWork
-from src.domain.policies.access_policy import Actor
 from src.interface.http.v1.error_responses import ERROR_RESPONSES
 from src.interface.http.v1.schemas import (
     AssignRoleRequest,
@@ -41,7 +41,7 @@ router = APIRouter(prefix="/admin", tags=["admin"], route_class=DishkaRoute)
 def assign_role(
     user_id: UUID,
     body: AssignRoleRequest,
-    actor: FromDishka[Actor],
+    actor: FromDishka[ActorContext],
     uow: FromDishka[UnitOfWork],
 ) -> None:
     handle_assign_role(
@@ -57,7 +57,7 @@ def assign_role(
 )
 def list_roles(
     user_id: UUID,
-    actor: FromDishka[Actor],
+    actor: FromDishka[ActorContext],
     uow: FromDishka[UnitOfWork],
 ) -> RoleAssignmentsResponse:
     roles = handle_list_role_assignments(
@@ -75,7 +75,7 @@ def list_roles(
 )
 def block_user(
     user_id: UUID,
-    actor: FromDishka[Actor],
+    actor: FromDishka[ActorContext],
     uow: FromDishka[UnitOfWork],
 ) -> None:
     handle_block_user(BlockUserCommand(user_id=user_id), uow=uow, actor=actor)
@@ -88,7 +88,7 @@ def block_user(
 )
 def unblock_user(
     user_id: UUID,
-    actor: FromDishka[Actor],
+    actor: FromDishka[ActorContext],
     uow: FromDishka[UnitOfWork],
 ) -> None:
     handle_unblock_user(UnblockUserCommand(user_id=user_id), uow=uow, actor=actor)
@@ -102,7 +102,7 @@ def unblock_user(
 )
 def list_user_sessions(
     user_id: UUID,
-    actor: FromDishka[Actor],
+    actor: FromDishka[ActorContext],
     uow: FromDishka[UnitOfWork],
 ) -> list[SessionResponse]:
     sessions = handle_list_sessions(
@@ -135,7 +135,7 @@ def list_user_sessions(
 def revoke_user_session(
     user_id: UUID,
     token_id: UUID,
-    actor: FromDishka[Actor],
+    actor: FromDishka[ActorContext],
     uow: FromDishka[UnitOfWork],
     time_provider: FromDishka[TimeProvider],
 ) -> None:

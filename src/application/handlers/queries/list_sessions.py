@@ -1,11 +1,14 @@
+from src.application.actor_context import ActorContext
 from src.application.errors import AccessDeniedError, NotFoundError
 from src.application.queries.list_sessions import ListSessionsQuery
 from src.application.unit_of_work import UnitOfWork
 from src.domain.aggregates.account import Session
-from src.domain.policies.access_policy import AccessPolicy, Actor
+from src.domain.policies.access_policy import AccessPolicy
 
 
-def handle(query: ListSessionsQuery, *, uow: UnitOfWork, actor: Actor) -> list[Session]:
+def handle(
+    query: ListSessionsQuery, *, uow: UnitOfWork, actor: ActorContext
+) -> list[Session]:
     """
     Получить список сессий пользователя.
 
@@ -14,7 +17,7 @@ def handle(query: ListSessionsQuery, *, uow: UnitOfWork, actor: Actor) -> list[S
     :param uow: Unit of Work.
     :type uow: UnitOfWork
     :param actor: Актор запроса.
-    :type actor: Actor
+    :type actor: ActorContext
     :raises NotFoundError: Если аккаунт не найден.
     :raises AccessDeniedError: Если доступ запрещён.
     :return: Список сессий.
@@ -23,6 +26,6 @@ def handle(query: ListSessionsQuery, *, uow: UnitOfWork, actor: Actor) -> list[S
     account = uow.user_repo.get_by_id(query.user_id)
     if account is None:
         raise NotFoundError("User not found")
-    if not AccessPolicy.can_view_sessions(actor, account):
+    if not AccessPolicy.can_view_sessions(actor.to_domain_actor(), account):
         raise AccessDeniedError("Access denied")
     return uow.session_repo.list_by_user(query.user_id)

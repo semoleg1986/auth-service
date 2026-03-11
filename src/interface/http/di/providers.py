@@ -7,16 +7,17 @@ from typing import Iterator
 from dishka import Provider, Scope, provide
 from fastapi import Request
 
+from src.application.actor_context import ActorContext
 from src.application.errors import AuthenticationError
 from src.application.ports.crypto import PasswordHasher
+from src.application.ports.jwks import JwksProvider
 from src.application.ports.time import TimeProvider
 from src.application.ports.tokens import TokenService
 from src.application.unit_of_work import UnitOfWork
-from src.domain.policies.access_policy import Actor
-from src.domain.value_objects import ALLOWED_ROLE_NAMES
 from src.infrastructure.crypto.argon2_hasher import Argon2PasswordHasher
 from src.infrastructure.crypto.simple_hasher import SimplePasswordHasher
 from src.infrastructure.persistence.uow.in_memory_uow import InMemoryUnitOfWork
+from src.infrastructure.tokens.jwks_provider import JwtJwksProvider
 from src.infrastructure.tokens.jwt_settings import load_jwt_settings
 from src.infrastructure.tokens.jwt_token_service import JwtTokenService
 
@@ -41,6 +42,10 @@ class AppProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_password_hasher(self) -> PasswordHasher:
         return _HASHER
+
+    @provide(scope=Scope.APP)
+    def provide_jwks_provider(self) -> JwksProvider:
+        return JwtJwksProvider()
 
     @provide(scope=Scope.APP)
     def provide_time_provider(self) -> TimeProvider:
@@ -74,7 +79,9 @@ class AppProvider(Provider):
         yield _IN_MEMORY_UOW
 
     @provide(scope=Scope.REQUEST)
-    def provide_actor(self, request: Request, token_service: TokenService) -> Actor:
+    def provide_actor(
+        self, request: Request, token_service: TokenService
+    ) -> ActorContext:
         auth_header = request.headers.get("Authorization", "")
         bearer_prefix = "Bearer "
         if not auth_header.startswith(bearer_prefix):
@@ -86,11 +93,7 @@ class AppProvider(Provider):
             user_id, roles = token_service.decode_access_token(access_token)
         except Exception as exc:
             raise AuthenticationError("Invalid access token") from exc
-        parsed_roles = {role.strip().lower() for role in roles if role.strip()}
-        unknown_roles = sorted(parsed_roles - ALLOWED_ROLE_NAMES)
-        if unknown_roles:
-            unknown_csv = ", ".join(unknown_roles)
-            raise AuthenticationError(
-                f"Unsupported roles in access token: {unknown_csv}"
-            )
-        return Actor(user_id=user_id, roles=frozenset(parsed_roles))
+        try:
+            return ActorContext.from_claims(user_id=user_id, roles=roles)
+        except ValueError as exc:
+            raise AuthenticationError(str(exc)) from exc

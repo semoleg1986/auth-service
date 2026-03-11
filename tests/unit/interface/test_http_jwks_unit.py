@@ -2,66 +2,53 @@ from __future__ import annotations
 
 from fastapi import HTTPException
 
-from src.infrastructure.tokens.jwt_settings import JwtSettings
+from src.application.errors import ServiceConfigurationError
 from src.interface.http import jwks as jwks_module
 
 
-def _settings(*, algorithm: str) -> JwtSettings:
-    return JwtSettings(
-        issuer="auth-service",
-        audience="user-children-service",
-        algorithms=(algorithm,),
-        private_key_pem="secret",
-        public_key_pem="secret",
-        access_ttl_seconds=900,
-        refresh_ttl_seconds=604800,
-    )
+class _FakeJwksProvider:
+    def __init__(self, payload=None, error: Exception | None = None) -> None:
+        self._payload = payload or {"keys": []}
+        self._error = error
+
+    def get_public_jwks(self):
+        if self._error is not None:
+            raise self._error
+        return self._payload
 
 
-def test_jwks_rejects_non_rs256(monkeypatch) -> None:
-    monkeypatch.setattr(
-        jwks_module,
-        "load_jwt_settings",
-        lambda: _settings(algorithm="HS256"),
-    )
+def test_jwks_rejects_non_rs256() -> None:
     try:
-        jwks_module.jwks()
+        jwks_module.jwks(
+            _FakeJwksProvider(
+                error=ServiceConfigurationError(
+                    "JWKS is available only for RS256",
+                    status_code=400,
+                )
+            )
+        )
         raise AssertionError("Expected HTTPException")
     except HTTPException as exc:
         assert exc.status_code == 400
 
 
-def test_jwks_returns_keys_for_rs256(monkeypatch) -> None:
-    monkeypatch.setattr(
-        jwks_module,
-        "load_jwt_settings",
-        lambda: _settings(algorithm="RS256"),
+def test_jwks_returns_keys_for_rs256() -> None:
+    payload = jwks_module.jwks(
+        _FakeJwksProvider(payload={"keys": [{"kty": "RSA", "kid": "kid-1"}]})
     )
-    monkeypatch.setattr(
-        jwks_module,
-        "build_jwk_with_kid",
-        lambda _pem: {"kty": "RSA", "kid": "kid-1"},
-    )
-    payload = jwks_module.jwks()
     assert payload == {"keys": [{"kty": "RSA", "kid": "kid-1"}]}
 
 
-def test_jwks_rejects_empty_algorithms(monkeypatch) -> None:
-    monkeypatch.setattr(
-        jwks_module,
-        "load_jwt_settings",
-        lambda: JwtSettings(
-            issuer="auth-service",
-            audience="user-children-service",
-            algorithms=(),
-            private_key_pem="secret",
-            public_key_pem="secret",
-            access_ttl_seconds=900,
-            refresh_ttl_seconds=604800,
-        ),
-    )
+def test_jwks_rejects_empty_algorithms() -> None:
     try:
-        jwks_module.jwks()
+        jwks_module.jwks(
+            _FakeJwksProvider(
+                error=ServiceConfigurationError(
+                    "JWT algorithms not configured",
+                    status_code=500,
+                )
+            )
+        )
         raise AssertionError("Expected HTTPException")
     except HTTPException as exc:
         assert exc.status_code == 500

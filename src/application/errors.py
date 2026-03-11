@@ -16,3 +16,11 @@ class InvariantViolationError(ApplicationError):
 
 class AuthenticationError(ApplicationError):
     """Raised when credentials are invalid."""
+
+
+class ServiceConfigurationError(ApplicationError):
+    """Raised when service runtime configuration is invalid."""
+
+    def __init__(self, detail: str, *, status_code: int = 500) -> None:
+        super().__init__(detail)
+        self.status_code = status_code

@@ -1,16 +1,17 @@
 from __future__ import annotations
 
+from src.application.actor_context import ActorContext
 from src.application.commands.unblock_user import UnblockUserCommand
 from src.application.errors import AccessDeniedError, NotFoundError
 from src.application.unit_of_work import UnitOfWork
-from src.domain.policies.access_policy import AccessPolicy, Actor
+from src.domain.policies.access_policy import AccessPolicy
 
 
 def handle_unblock_user(
     command: UnblockUserCommand,
     *,
     uow: UnitOfWork,
-    actor: Actor,
+    actor: ActorContext,
 ) -> None:
     """
     Разблокировать пользователя (admin only).
@@ -20,7 +21,7 @@ def handle_unblock_user(
     :param uow: Unit of Work.
     :type uow: UnitOfWork
     :param actor: Актор (должен быть admin).
-    :type actor: Actor
+    :type actor: ActorContext
     :raises NotFoundError: Если пользователь не найден.
     :raises AccessDeniedError: Если доступ запрещён.
     :return: None
@@ -30,7 +31,7 @@ def handle_unblock_user(
     if account is None:
         raise NotFoundError("User not found")
 
-    if not AccessPolicy.can_unblock_user(actor, account):
+    if not AccessPolicy.can_unblock_user(actor.to_domain_actor(), account):
         raise AccessDeniedError("Access denied")
 
     account.unblock()

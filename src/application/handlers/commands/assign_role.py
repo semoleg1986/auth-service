@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from src.application.actor_context import ActorContext
 from src.application.commands.assign_role import AssignRoleCommand
 from src.application.errors import (
     AccessDeniedError,
@@ -8,7 +9,7 @@ from src.application.errors import (
 )
 from src.application.unit_of_work import UnitOfWork
 from src.domain.errors import InvariantViolationError as DomainInvariantError
-from src.domain.policies.access_policy import AccessPolicy, Actor
+from src.domain.policies.access_policy import AccessPolicy
 from src.domain.value_objects import Role
 
 
@@ -16,7 +17,7 @@ def handle_assign_role(
     command: AssignRoleCommand,
     *,
     uow: UnitOfWork,
-    actor: Actor,
+    actor: ActorContext,
 ) -> None:
     """
     Назначить роль пользователю (admin only).
@@ -26,7 +27,7 @@ def handle_assign_role(
     :param uow: Unit of Work.
     :type uow: UnitOfWork
     :param actor: Актор (должен быть admin).
-    :type actor: Actor
+    :type actor: ActorContext
     :raises NotFoundError: Если пользователь не найден.
     :raises AccessDeniedError: Если доступ запрещён.
     :return: None
@@ -36,7 +37,7 @@ def handle_assign_role(
     if account is None:
         raise NotFoundError("User not found")
 
-    if not AccessPolicy.can_assign_role(actor, account):
+    if not AccessPolicy.can_assign_role(actor.to_domain_actor(), account):
         raise AccessDeniedError("Access denied")
 
     try:

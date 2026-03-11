@@ -169,8 +169,10 @@ class UserAccount:
 
     def _replace_credential(self, updated_credential: Credential) -> None:
         self.credentials = [
-            updated_credential
-            if credential.credential_id == updated_credential.credential_id
-            else credential
+            (
+                updated_credential
+                if credential.credential_id == updated_credential.credential_id
+                else credential
+            )
             for credential in self.credentials
         ]

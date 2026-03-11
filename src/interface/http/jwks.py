@@ -1,26 +1,20 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, status
+from dishka.integrations.fastapi import DishkaRoute, FromDishka
+from fastapi import APIRouter, HTTPException
 
-from src.infrastructure.tokens.jwk_utils import build_jwk_with_kid
-from src.infrastructure.tokens.jwt_settings import load_jwt_settings
+from src.application.errors import ServiceConfigurationError
+from src.application.ports.jwks import JwksProvider
 
-router = APIRouter()
+router = APIRouter(route_class=DishkaRoute)
 
 
 @router.get("/.well-known/jwks.json")
-def jwks():
-    settings = load_jwt_settings()
-    if not settings.algorithms:
+def jwks(jwks_provider: FromDishka[JwksProvider]):
+    try:
+        return jwks_provider.get_public_jwks()
+    except ServiceConfigurationError as exc:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="JWT algorithms not configured",
-        )
-    if settings.algorithms[0] != "RS256":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="JWKS is available only for RS256",
-        )
-
-    jwk = build_jwk_with_kid(settings.public_key_pem)
-    return {"keys": [jwk]}
+            status_code=exc.status_code,
+            detail=str(exc),
+        ) from exc

@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from src.application.actor_context import ActorContext
 from src.application.commands import (
     AssignRoleCommand,
     BlockUserCommand,
@@ -40,7 +41,6 @@ from src.application.ports.tokens import TokenService
 from src.application.queries import ListRoleAssignmentsQuery, ListSessionsQuery
 from src.application.unit_of_work import UnitOfWork
 from src.domain.aggregates.account import Credential, Session, UserAccount
-from src.domain.policies.access_policy import Actor
 from src.domain.value_objects import ROLE_ADMIN, AccountStatus, Role
 
 
@@ -143,6 +143,13 @@ class FixedTime(TimeProvider):
 
     def now(self) -> datetime:
         return self._now
+
+
+def _actor(*, user_id: UUID | None = None, roles: tuple[str, ...] = ()) -> ActorContext:
+    return ActorContext(
+        user_id=user_id or uuid4(),
+        roles=frozenset(roles),
+    )
 
 
 class SimpleTokenService(TokenService):
@@ -545,7 +552,7 @@ def test_assign_role_admin_only(uow: InMemoryUoW) -> None:
     account = UserAccount(user_id=uuid4(), email="user@example.com")
     uow.user_repo.save(account)
 
-    admin = Actor(user_id=uuid4(), is_admin=True)
+    admin = _actor(roles=(ROLE_ADMIN,))
     handle_assign_role(
         AssignRoleCommand(user_id=account.user_id, role=ROLE_ADMIN),
         uow=uow,
@@ -553,7 +560,7 @@ def test_assign_role_admin_only(uow: InMemoryUoW) -> None:
     )
     assert Role(name=ROLE_ADMIN) in account.roles
 
-    user = Actor(user_id=uuid4(), is_admin=False)
+    user = _actor()
     with pytest.raises(AccessDeniedError):
         handle_assign_role(
             AssignRoleCommand(user_id=account.user_id, role="mod"),
@@ -565,7 +572,7 @@ def test_assign_role_admin_only(uow: InMemoryUoW) -> None:
 def test_assign_role_rejects_unknown_role(uow: InMemoryUoW) -> None:
     account = UserAccount(user_id=uuid4(), email="user@example.com")
     uow.user_repo.save(account)
-    admin = Actor(user_id=uuid4(), is_admin=True)
+    admin = _actor(roles=(ROLE_ADMIN,))
 
     with pytest.raises(InvariantViolationError, match="Unsupported role"):
         handle_assign_role(
@@ -579,13 +586,13 @@ def test_block_and_unblock_admin_only(uow: InMemoryUoW) -> None:
     account = UserAccount(user_id=uuid4(), email="user@example.com")
     uow.user_repo.save(account)
 
-    user = Actor(user_id=uuid4(), is_admin=False)
+    user = _actor()
     with pytest.raises(AccessDeniedError):
         handle_block_user(
             BlockUserCommand(user_id=account.user_id), uow=uow, actor=user
         )
 
-    admin = Actor(user_id=uuid4(), is_admin=True)
+    admin = _actor(roles=(ROLE_ADMIN,))
     handle_block_user(BlockUserCommand(user_id=account.user_id), uow=uow, actor=admin)
     assert account.status == AccountStatus.BLOCKED
 
@@ -613,8 +620,8 @@ def test_list_sessions_admin_or_self(uow: InMemoryUoW, now: datetime) -> None:
     uow.session_repo.save(s1)
     uow.session_repo.save(s2)
 
-    admin = Actor(user_id=uuid4(), is_admin=True)
-    self_actor = Actor(user_id=user_id, is_admin=False)
+    admin = _actor(roles=(ROLE_ADMIN,))
+    self_actor = _actor(user_id=user_id)
 
     sessions_admin = handle_list_sessions(
         ListSessionsQuery(user_id=user_id), uow=uow, actor=admin
@@ -632,7 +639,7 @@ def test_list_sessions_denied(uow: InMemoryUoW) -> None:
     account = UserAccount(user_id=user_id, email="user@example.com")
     uow.user_repo.save(account)
 
-    other = Actor(user_id=uuid4(), is_admin=False)
+    other = _actor()
     with pytest.raises(AccessDeniedError):
         handle_list_sessions(ListSessionsQuery(user_id=user_id), uow=uow, actor=other)
 
@@ -644,8 +651,8 @@ def test_list_role_assignments_admin_or_self(uow: InMemoryUoW) -> None:
     account.assign_role(Role("admin"))
     uow.user_repo.save(account)
 
-    admin = Actor(user_id=uuid4(), is_admin=True)
-    self_actor = Actor(user_id=user_id, is_admin=False)
+    admin = _actor(roles=(ROLE_ADMIN,))
+    self_actor = _actor(user_id=user_id)
 
     roles_admin = handle_list_role_assignments(
         ListRoleAssignmentsQuery(user_id=user_id), uow=uow, actor=admin
@@ -663,7 +670,7 @@ def test_list_role_assignments_denied(uow: InMemoryUoW) -> None:
     account = UserAccount(user_id=user_id, email="user@example.com")
     uow.user_repo.save(account)
 
-    other = Actor(user_id=uuid4(), is_admin=False)
+    other = _actor()
     with pytest.raises(AccessDeniedError):
         handle_list_role_assignments(
             ListRoleAssignmentsQuery(user_id=user_id), uow=uow, actor=other
@@ -684,7 +691,7 @@ def test_revoke_session_admin_only(
     )
     uow.session_repo.save(session)
 
-    user = Actor(user_id=uuid4(), is_admin=False)
+    user = _actor()
     with pytest.raises(AccessDeniedError):
         handle_revoke_session(
             RevokeSessionCommand(user_id=account.user_id, token_id=session.token_id),
@@ -693,7 +700,7 @@ def test_revoke_session_admin_only(
             time_provider=time_provider,
         )
 
-    admin = Actor(user_id=uuid4(), is_admin=True)
+    admin = _actor(roles=(ROLE_ADMIN,))
     handle_revoke_session(
         RevokeSessionCommand(user_id=account.user_id, token_id=session.token_id),
         uow=uow,

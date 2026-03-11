@@ -19,8 +19,7 @@ from src.domain.policies.access_policy import AccessPolicy
 class _PasswordHashUpgrader(Protocol):
     def upgrade_hash_if_needed(
         self, *, password: str, password_hash: str
-    ) -> str | None:
-        ...
+    ) -> str | None: ...
 
 
 def handle_login(
