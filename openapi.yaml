@@ -447,6 +447,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: auth_login",
+                  "instance": "/v1/auth/login",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 429,
+                  "title": "Too Many Requests",
+                  "type": "https://example.com/problems/too-many-requests"
+                }
+              }
+            },
+            "description": "Too many requests"
           }
         },
         "summary": "Block User",
@@ -574,6 +594,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: auth_login",
+                  "instance": "/v1/auth/login",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 429,
+                  "title": "Too Many Requests",
+                  "type": "https://example.com/problems/too-many-requests"
+                }
+              }
+            },
+            "description": "Too many requests"
           }
         },
         "summary": "Assign Role",
@@ -691,6 +731,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: auth_login",
+                  "instance": "/v1/auth/login",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 429,
+                  "title": "Too Many Requests",
+                  "type": "https://example.com/problems/too-many-requests"
+                }
+              }
+            },
+            "description": "Too many requests"
           }
         },
         "summary": "Unblock User",
@@ -813,6 +873,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: auth_login",
+                  "instance": "/v1/auth/login",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 429,
+                  "title": "Too Many Requests",
+                  "type": "https://example.com/problems/too-many-requests"
+                }
+              }
+            },
+            "description": "Too many requests"
           }
         },
         "summary": "Login",
@@ -928,6 +1008,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: auth_login",
+                  "instance": "/v1/auth/login",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 429,
+                  "title": "Too Many Requests",
+                  "type": "https://example.com/problems/too-many-requests"
+                }
+              }
+            },
+            "description": "Too many requests"
           }
         },
         "summary": "Logout",
@@ -1050,6 +1150,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: auth_login",
+                  "instance": "/v1/auth/login",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 429,
+                  "title": "Too Many Requests",
+                  "type": "https://example.com/problems/too-many-requests"
+                }
+              }
+            },
+            "description": "Too many requests"
           }
         },
         "summary": "Refresh",
@@ -1172,6 +1292,26 @@
               }
             },
             "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: auth_login",
+                  "instance": "/v1/auth/login",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 429,
+                  "title": "Too Many Requests",
+                  "type": "https://example.com/problems/too-many-requests"
+                }
+              }
+            },
+            "description": "Too many requests"
           }
         },
         "summary": "Register",

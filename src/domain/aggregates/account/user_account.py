@@ -148,6 +148,25 @@ class UserAccount:
         )
         self.updated_at = now
 
+    def replace_password_hash(
+        self,
+        *,
+        new_secret_hash: str,
+        at: datetime | None = None,
+    ) -> None:
+        credential = self.get_password_credential()
+        if credential is None:
+            raise InvariantViolationError("Password credential not found")
+        now = at or _utcnow()
+        self._replace_credential(
+            replace(
+                credential,
+                secret_hash=new_secret_hash,
+                updated_at=now,
+            )
+        )
+        self.updated_at = now
+
     def _replace_credential(self, updated_credential: Credential) -> None:
         self.credentials = [
             updated_credential

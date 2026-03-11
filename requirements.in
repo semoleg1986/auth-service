@@ -8,6 +8,8 @@ mypy
 pre-commit
 PyJWT
 cryptography
+argon2-cffi
+argon2-cffi-bindings
 fastapi
 uvicorn
 httpx

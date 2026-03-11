@@ -10,6 +10,7 @@ def _make_app_with_env(
     monkeypatch: pytest.MonkeyPatch,
     *,
     bootstrap_admin_email: str | None = None,
+    login_rate_limit_max: int | None = None,
 ) -> TestClient:
     secret = "dev-jwt-secret-please-change-32-bytes"
     monkeypatch.setenv("JWT_ISSUER", "test-issuer")
@@ -19,6 +20,10 @@ def _make_app_with_env(
     monkeypatch.setenv("JWT_ALGORITHMS", "HS256")
     monkeypatch.setenv("JWT_ACCESS_TTL_SECONDS", "60")
     monkeypatch.setenv("JWT_REFRESH_TTL_SECONDS", "120")
+    monkeypatch.setenv("AUTH_RATE_LIMIT_ENABLED", "true")
+    if login_rate_limit_max is not None:
+        monkeypatch.setenv("AUTH_RATE_LIMIT_LOGIN_MAX", str(login_rate_limit_max))
+        monkeypatch.setenv("AUTH_RATE_LIMIT_LOGIN_WINDOW_SECONDS", "60")
     if bootstrap_admin_email:
         monkeypatch.setenv("BOOTSTRAP_ADMIN_EMAIL", bootstrap_admin_email)
     else:
@@ -125,3 +130,22 @@ def test_invalid_bearer_token_is_rejected(monkeypatch: pytest.MonkeyPatch) -> No
     )
     assert response.status_code == 401
     assert "Invalid access token" in response.text
+
+
+def test_login_is_rate_limited(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _make_app_with_env(monkeypatch, login_rate_limit_max=1)
+    email = f"user-{uuid4()}@example.com"
+    _register_user(client, email=email)
+
+    first_login = client.post(
+        "/v1/auth/login",
+        json={"identifier": email, "password": "pass"},
+    )
+    assert first_login.status_code == 200
+
+    second_login = client.post(
+        "/v1/auth/login",
+        json={"identifier": email, "password": "pass"},
+    )
+    assert second_login.status_code == 429
+    assert second_login.headers.get("Retry-After")

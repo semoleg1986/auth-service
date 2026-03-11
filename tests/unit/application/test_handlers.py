@@ -78,10 +78,22 @@ class InMemorySessionRepo:
     def revoke(self, token_id: UUID) -> None:
         session = self.sessions.get(token_id)
         if session is not None:
-            session.revoked_at = datetime.now(timezone.utc)
+            now = datetime.now(timezone.utc)
+            session.revoked_at = now
+            session.updated_at = now
+            session.revoke_reason = "logout"
 
     def list_by_user(self, user_id: UUID) -> list[Session]:
         return [s for s in self.sessions.values() if s.user_id == user_id]
+
+    def revoke_all_by_user(self, user_id: UUID, *, reason: str) -> None:
+        now = datetime.now(timezone.utc)
+        for session in self.sessions.values():
+            if session.user_id != user_id or session.revoked_at is not None:
+                continue
+            session.revoked_at = now
+            session.updated_at = now
+            session.revoke_reason = reason
 
 
 class InMemoryUoW(UnitOfWork):
@@ -105,6 +117,22 @@ class SimpleHasher(PasswordHasher):
 
     def verify(self, password: str, password_hash: str) -> bool:
         return password_hash == f"hash:{password}"
+
+
+class UpgradingHasher(SimpleHasher):
+    def verify(self, password: str, password_hash: str) -> bool:
+        return password_hash in {f"hash:{password}", f"legacy:{password}"}
+
+    def upgrade_hash_if_needed(
+        self, *, password: str, password_hash: str
+    ) -> str | None:
+        is_legacy_match = (
+            password_hash.startswith("legacy:")
+            and password_hash == f"legacy:{password}"
+        )
+        if is_legacy_match:
+            return f"hash:{password}"
+        return None
 
 
 class FixedTime(TimeProvider):
@@ -246,6 +274,38 @@ def test_login_success(
     assert password_credential.failed_attempts == 0
     assert password_credential.last_used_at == time_provider.now()
     assert uow.committed is True
+
+
+def test_login_success_rehashes_legacy_secret(
+    uow: InMemoryUoW,
+    tokens: SimpleTokenService,
+    time_provider: FixedTime,
+) -> None:
+    hasher = UpgradingHasher()
+    account = UserAccount(user_id=uuid4(), email="user@example.com")
+    account.add_credential(
+        Credential(
+            credential_id=uuid4(),
+            type="password",
+            secret_hash="legacy:pass",
+        )
+    )
+    account.assign_role(Role(name="user"))
+    uow.user_repo.save(account)
+
+    result = handle_login(
+        LoginCommand(identifier="user@example.com", password="pass"),
+        uow=uow,
+        password_hasher=hasher,
+        token_service=tokens,
+        time_provider=time_provider,
+        refresh_ttl_seconds=3600,
+    )
+
+    assert result.tokens.access_token.startswith("access:")
+    password_credential = account.get_password_credential()
+    assert password_credential is not None
+    assert password_credential.secret_hash == "hash:pass"
 
 
 def test_login_invalid_password_raises(
@@ -397,7 +457,56 @@ def test_refresh_success(
 
     assert isinstance(tokens_out, AuthTokens)
     assert tokens_out.access_token.startswith("access:")
-    assert tokens_out.refresh_token == refresh_token
+    assert tokens_out.refresh_token.startswith("refresh:")
+    assert tokens_out.refresh_token != refresh_token
+    assert uow.session_repo.get_by_id(session.token_id).revoke_reason == "rotated"
+
+
+def test_refresh_reuse_detected_revokes_all_sessions(
+    uow: InMemoryUoW,
+    tokens: SimpleTokenService,
+    time_provider: FixedTime,
+    now: datetime,
+) -> None:
+    account = UserAccount(user_id=uuid4(), email="user@example.com")
+    account.assign_role(Role(name="user"))
+    uow.user_repo.save(account)
+    first_session = Session(
+        token_id=uuid4(),
+        user_id=account.user_id,
+        expires_at=now + timedelta(minutes=30),
+    )
+    another_session = Session(
+        token_id=uuid4(),
+        user_id=account.user_id,
+        expires_at=now + timedelta(minutes=30),
+    )
+    uow.session_repo.save(first_session)
+    uow.session_repo.save(another_session)
+    refresh_token = tokens.issue_refresh_token(
+        token_id=first_session.token_id,
+        user_id=account.user_id,
+    )
+
+    rotated = handle_refresh(
+        RefreshCommand(refresh_token=refresh_token),
+        uow=uow,
+        token_service=tokens,
+        time_provider=time_provider,
+    )
+    assert rotated.refresh_token != refresh_token
+
+    with pytest.raises(AuthenticationError, match="reuse detected"):
+        handle_refresh(
+            RefreshCommand(refresh_token=refresh_token),
+            uow=uow,
+            token_service=tokens,
+            time_provider=time_provider,
+        )
+
+    sessions = uow.session_repo.list_by_user(account.user_id)
+    active_sessions = [s for s in sessions if s.revoked_at is None]
+    assert active_sessions == []
 
 
 def test_refresh_invalid_token_raises(

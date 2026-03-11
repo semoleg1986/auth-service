@@ -54,3 +54,16 @@ class SessionRepository(Protocol):
         :rtype: list[Session]
         """
         ...
+
+    def revoke_all_by_user(self, user_id: UUID, *, reason: str) -> None:
+        """
+        Отозвать все сессии пользователя.
+
+        :param user_id: Идентификатор пользователя.
+        :type user_id: UUID
+        :param reason: Причина отзыва.
+        :type reason: str
+        :return: None
+        :rtype: None
+        """
+        ...

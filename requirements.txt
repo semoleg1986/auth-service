@@ -6,6 +6,10 @@
 #
 alembic==1.18.4
     # via -r requirements.in
+argon2-cffi==25.1.0
+    # via -r requirements.in
+argon2-cffi-bindings==25.1.0
+    # via argon2-cffi
 annotated-doc==0.0.4
     # via fastapi
 annotated-types==0.7.0

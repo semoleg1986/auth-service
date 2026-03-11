@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from typing import Protocol, runtime_checkable
 from uuid import uuid4
 
 from src.application.commands.login import LoginCommand
@@ -12,6 +13,14 @@ from src.application.ports.tokens import TokenService
 from src.application.unit_of_work import UnitOfWork
 from src.domain.aggregates.account import Session
 from src.domain.policies.access_policy import AccessPolicy
+
+
+@runtime_checkable
+class _PasswordHashUpgrader(Protocol):
+    def upgrade_hash_if_needed(
+        self, *, password: str, password_hash: str
+    ) -> str | None:
+        ...
 
 
 def handle_login(
@@ -73,6 +82,17 @@ def handle_login(
         if account.is_password_locked(at=now):
             raise AuthenticationError("Too many failed attempts. Try later")
         raise AuthenticationError("Invalid credentials")
+
+    if isinstance(password_hasher, _PasswordHashUpgrader):
+        upgraded_hash = password_hasher.upgrade_hash_if_needed(
+            password=command.password,
+            password_hash=password_cred.secret_hash,
+        )
+        if upgraded_hash is not None:
+            account.replace_password_hash(
+                new_secret_hash=upgraded_hash,
+                at=now,
+            )
 
     account.mark_login(at=now)
     account.register_successful_password_login(at=now)

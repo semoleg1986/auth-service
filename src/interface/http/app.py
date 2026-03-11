@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from dishka import make_async_container
 from dishka.integrations.fastapi import FastapiProvider, setup_dishka
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
 
 from src.application.errors import (
     AccessDeniedError,
@@ -21,9 +21,14 @@ from src.interface.http.errors import (
     authentication_error_handler,
     invariant_violation_handler,
     not_found_handler,
+    problem_response,
 )
 from src.interface.http.health import router as health_router
 from src.interface.http.jwks import router as jwks_router
+from src.interface.http.rate_limit import (
+    RequestRateLimiter,
+    load_rate_limit_rules_from_env,
+)
 from src.interface.http.v1.admin_router import router as admin_router
 from src.interface.http.v1.auth_router import router as auth_router
 from src.interface.http.wiring import init_persistence
@@ -36,6 +41,7 @@ def create_app() -> FastAPI:
     load_jwt_settings()
     init_persistence()
     container = make_async_container(AppProvider(), FastapiProvider())
+    rate_limiter = RequestRateLimiter(load_rate_limit_rules_from_env())
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -48,7 +54,18 @@ def create_app() -> FastAPI:
     async def correlation_id_middleware(request: Request, call_next):
         request_id = request.headers.get("X-Request-Id") or str(uuid4())
         request.state.request_id = request_id
-        response: Response = await call_next(request)
+        violation = rate_limiter.check(request)
+        if violation is not None:
+            response = problem_response(
+                status_code=429,
+                title="Too Many Requests",
+                detail=f"Rate limit exceeded: {violation.rule_name}",
+                type_suffix="too-many-requests",
+                request=request,
+            )
+            response.headers["Retry-After"] = str(violation.retry_after_seconds)
+        else:
+            response = await call_next(request)
         response.headers["X-Request-Id"] = request_id
         logger.info(
             "request",

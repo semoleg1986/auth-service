@@ -64,3 +64,16 @@ class SqlAlchemySessionRepository:
             select(SessionModel).where(SessionModel.user_id == user_id)
         ).scalars()
         return [self._to_domain(item) for item in rows]
+
+    def revoke_all_by_user(self, user_id: UUID, *, reason: str) -> None:
+        now = datetime.now(timezone.utc)
+        rows = self._db.execute(
+            select(SessionModel).where(
+                SessionModel.user_id == user_id,
+                SessionModel.revoked_at.is_(None),
+            )
+        ).scalars()
+        for model in rows:
+            model.revoked_at = now
+            model.updated_at = now
+            model.revoke_reason = reason

@@ -1,3 +1,4 @@
+from .crypto.argon2_hasher import Argon2PasswordHasher
 from .crypto.simple_hasher import SimplePasswordHasher
 from .persistence.repositories.in_memory_session_repository import (
     InMemorySessionRepository,
@@ -13,5 +14,6 @@ __all__ = [
     "InMemoryUserAccountRepository",
     "InMemoryUnitOfWork",
     "InMemoryTokenService",
+    "Argon2PasswordHasher",
     "SimplePasswordHasher",
 ]

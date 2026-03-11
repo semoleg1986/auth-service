@@ -19,7 +19,19 @@ class InMemorySessionRepository:
     def revoke(self, token_id: UUID) -> None:
         session = self._sessions.get(token_id)
         if session is not None:
-            session.revoked_at = datetime.now(timezone.utc)
+            now = datetime.now(timezone.utc)
+            session.revoked_at = now
+            session.updated_at = now
+            session.revoke_reason = "logout"
 
     def list_by_user(self, user_id: UUID) -> list[Session]:
         return [s for s in self._sessions.values() if s.user_id == user_id]
+
+    def revoke_all_by_user(self, user_id: UUID, *, reason: str) -> None:
+        now = datetime.now(timezone.utc)
+        for session in self._sessions.values():
+            if session.user_id != user_id or session.revoked_at is not None:
+                continue
+            session.revoked_at = now
+            session.updated_at = now
+            session.revoke_reason = reason

@@ -70,4 +70,20 @@ ERROR_RESPONSES = {
             }
         },
     },
+    429: {
+        "model": ProblemDetails,
+        "description": "Too many requests",
+        "content": {
+            "application/problem+json": {
+                "example": {
+                    "type": f"{_BASE_URL}/too-many-requests",
+                    "title": "Too Many Requests",
+                    "status": 429,
+                    "detail": "Rate limit exceeded: auth_login",
+                    "instance": "/v1/auth/login",
+                    "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                }
+            }
+        },
+    },
 }
