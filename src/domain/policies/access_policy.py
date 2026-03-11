@@ -1,10 +1,15 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from uuid import UUID
 
 from src.domain.aggregates.account import Session, UserAccount
-from src.domain.value_objects import AccountStatus
+from src.domain.value_objects import (
+    ROLE_ADMIN,
+    ROLE_AUDITOR,
+    ROLE_SUPPORT,
+    AccountStatus,
+)
 
 
 @dataclass(frozen=True)
@@ -14,12 +19,25 @@ class Actor:
 
     :param user_id: Идентификатор актёра.
     :type user_id: UUID
-    :param is_admin: Флаг администратора.
+    :param is_admin: Legacy-флаг администратора (для обратной совместимости).
     :type is_admin: bool
+    :param roles: Роли актёра.
+    :type roles: frozenset[str]
     """
 
     user_id: UUID
-    is_admin: bool
+    is_admin: bool = False
+    roles: frozenset[str] = field(default_factory=frozenset)
+
+    def __post_init__(self) -> None:
+        normalized_roles = {r.strip().lower() for r in self.roles if r.strip()}
+        if self.is_admin:
+            normalized_roles.add(ROLE_ADMIN)
+        object.__setattr__(self, "roles", frozenset(normalized_roles))
+        object.__setattr__(self, "is_admin", ROLE_ADMIN in normalized_roles)
+
+    def has_role(self, role_name: str) -> bool:
+        return role_name in self.roles
 
 
 class AccessPolicy:
@@ -39,7 +57,7 @@ class AccessPolicy:
         :return: True, если доступ разрешён.
         :rtype: bool
         """
-        return actor.is_admin
+        return actor.has_role(ROLE_ADMIN)
 
     @staticmethod
     def can_block_user(actor: Actor, account: UserAccount) -> bool:
@@ -53,7 +71,7 @@ class AccessPolicy:
         :return: True, если доступ разрешён.
         :rtype: bool
         """
-        return actor.is_admin
+        return actor.has_role(ROLE_ADMIN)
 
     @staticmethod
     def can_unblock_user(actor: Actor, account: UserAccount) -> bool:
@@ -67,7 +85,7 @@ class AccessPolicy:
         :return: True, если доступ разрешён.
         :rtype: bool
         """
-        return actor.is_admin
+        return actor.has_role(ROLE_ADMIN)
 
     @staticmethod
     def can_view_roles(actor: Actor, account: UserAccount) -> bool:
@@ -81,7 +99,12 @@ class AccessPolicy:
         :return: True, если доступ разрешён.
         :rtype: bool
         """
-        return actor.is_admin or actor.user_id == account.user_id
+        return (
+            actor.user_id == account.user_id
+            or actor.has_role(ROLE_ADMIN)
+            or actor.has_role(ROLE_AUDITOR)
+            or actor.has_role(ROLE_SUPPORT)
+        )
 
     @staticmethod
     def can_view_sessions(actor: Actor, account: UserAccount) -> bool:
@@ -95,7 +118,12 @@ class AccessPolicy:
         :return: True, если доступ разрешён.
         :rtype: bool
         """
-        return actor.is_admin or actor.user_id == account.user_id
+        return (
+            actor.user_id == account.user_id
+            or actor.has_role(ROLE_ADMIN)
+            or actor.has_role(ROLE_AUDITOR)
+            or actor.has_role(ROLE_SUPPORT)
+        )
 
     @staticmethod
     def can_login(account: UserAccount) -> bool:

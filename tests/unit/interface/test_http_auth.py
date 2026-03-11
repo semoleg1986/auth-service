@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from uuid import uuid4
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -51,3 +53,66 @@ def test_login_invalid(monkeypatch: pytest.MonkeyPatch) -> None:
         json={"identifier": "nope@example.com", "password": "pass"},
     )
     assert resp.status_code == 401
+
+
+def test_admin_role_header_allows_admin_route(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _make_app_with_env(monkeypatch)
+    reg = client.post(
+        "/v1/auth/register",
+        json={"email": "role-user@example.com", "password": "pass"},
+    )
+    assert reg.status_code == 201
+    user_id = reg.json()["user_id"]
+
+    response = client.post(
+        f"/v1/admin/users/{user_id}/roles",
+        json={"role": "support"},
+        headers={
+            "X-Actor-Id": str(uuid4()),
+            "X-Actor-Roles": "admin,auditor",
+        },
+    )
+    assert response.status_code == 204
+
+
+def test_legacy_admin_header_allows_admin_route(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = _make_app_with_env(monkeypatch)
+    reg = client.post(
+        "/v1/auth/register",
+        json={"email": "legacy-admin@example.com", "password": "pass"},
+    )
+    assert reg.status_code == 201
+    user_id = reg.json()["user_id"]
+
+    response = client.post(
+        f"/v1/admin/users/{user_id}/roles",
+        json={"role": "auditor"},
+        headers={
+            "X-Actor-Id": str(uuid4()),
+            "X-Actor-Admin": "true",
+        },
+    )
+    assert response.status_code == 204
+
+
+def test_unknown_actor_role_header_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _make_app_with_env(monkeypatch)
+    reg = client.post(
+        "/v1/auth/register",
+        json={"email": "unknown-role@example.com", "password": "pass"},
+    )
+    assert reg.status_code == 201
+    user_id = reg.json()["user_id"]
+
+    response = client.post(
+        f"/v1/admin/users/{user_id}/roles",
+        json={"role": "auditor"},
+        headers={
+            "X-Actor-Id": str(uuid4()),
+            "X-Actor-Roles": "admin,superuser",
+        },
+    )
+    assert response.status_code == 401
+    assert "Unsupported roles in X-Actor-Roles" in response.text

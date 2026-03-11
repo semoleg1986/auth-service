@@ -14,6 +14,7 @@ from src.application.ports.time import TimeProvider
 from src.application.ports.tokens import TokenService
 from src.application.unit_of_work import UnitOfWork
 from src.domain.policies.access_policy import Actor
+from src.domain.value_objects import ALLOWED_ROLE_NAMES, ROLE_ADMIN
 from src.infrastructure.crypto.simple_hasher import SimplePasswordHasher
 from src.infrastructure.persistence.uow.in_memory_uow import InMemoryUnitOfWork
 from src.infrastructure.tokens.jwt_settings import load_jwt_settings
@@ -72,6 +73,7 @@ class AppProvider(Provider):
     def provide_actor(self, request: Request) -> Actor:
         x_actor_id = request.headers.get("X-Actor-Id")
         x_actor_admin = request.headers.get("X-Actor-Admin")
+        x_actor_roles = request.headers.get("X-Actor-Roles", "")
         if not x_actor_id:
             raise AuthenticationError("X-Actor-Id header is required")
         try:
@@ -79,4 +81,15 @@ class AppProvider(Provider):
         except ValueError as exc:
             raise AuthenticationError("Invalid X-Actor-Id") from exc
         is_admin = str(x_actor_admin or "").lower() in {"1", "true", "yes"}
-        return Actor(user_id=user_id, is_admin=is_admin)
+        parsed_roles = {
+            role.strip().lower() for role in x_actor_roles.split(",") if role.strip()
+        }
+        unknown_roles = sorted(parsed_roles - ALLOWED_ROLE_NAMES)
+        if unknown_roles:
+            unknown_csv = ", ".join(unknown_roles)
+            raise AuthenticationError(
+                f"Unsupported roles in X-Actor-Roles: {unknown_csv}"
+            )
+        if is_admin:
+            parsed_roles.add(ROLE_ADMIN)
+        return Actor(user_id=user_id, roles=frozenset(parsed_roles))
