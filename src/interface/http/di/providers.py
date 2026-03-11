@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 from typing import Iterator
-from uuid import UUID
 
 from dishka import Provider, Scope, provide
 from fastapi import Request
@@ -14,7 +13,7 @@ from src.application.ports.time import TimeProvider
 from src.application.ports.tokens import TokenService
 from src.application.unit_of_work import UnitOfWork
 from src.domain.policies.access_policy import Actor
-from src.domain.value_objects import ALLOWED_ROLE_NAMES, ROLE_ADMIN
+from src.domain.value_objects import ALLOWED_ROLE_NAMES
 from src.infrastructure.crypto.simple_hasher import SimplePasswordHasher
 from src.infrastructure.persistence.uow.in_memory_uow import InMemoryUnitOfWork
 from src.infrastructure.tokens.jwt_settings import load_jwt_settings
@@ -70,26 +69,23 @@ class AppProvider(Provider):
         yield _IN_MEMORY_UOW
 
     @provide(scope=Scope.REQUEST)
-    def provide_actor(self, request: Request) -> Actor:
-        x_actor_id = request.headers.get("X-Actor-Id")
-        x_actor_admin = request.headers.get("X-Actor-Admin")
-        x_actor_roles = request.headers.get("X-Actor-Roles", "")
-        if not x_actor_id:
-            raise AuthenticationError("X-Actor-Id header is required")
+    def provide_actor(self, request: Request, token_service: TokenService) -> Actor:
+        auth_header = request.headers.get("Authorization", "")
+        bearer_prefix = "Bearer "
+        if not auth_header.startswith(bearer_prefix):
+            raise AuthenticationError("Bearer access token is required")
+        access_token = auth_header[len(bearer_prefix) :].strip()
+        if not access_token:
+            raise AuthenticationError("Bearer access token is required")
         try:
-            user_id = UUID(x_actor_id)
-        except ValueError as exc:
-            raise AuthenticationError("Invalid X-Actor-Id") from exc
-        is_admin = str(x_actor_admin or "").lower() in {"1", "true", "yes"}
-        parsed_roles = {
-            role.strip().lower() for role in x_actor_roles.split(",") if role.strip()
-        }
+            user_id, roles = token_service.decode_access_token(access_token)
+        except Exception as exc:
+            raise AuthenticationError("Invalid access token") from exc
+        parsed_roles = {role.strip().lower() for role in roles if role.strip()}
         unknown_roles = sorted(parsed_roles - ALLOWED_ROLE_NAMES)
         if unknown_roles:
             unknown_csv = ", ".join(unknown_roles)
             raise AuthenticationError(
-                f"Unsupported roles in X-Actor-Roles: {unknown_csv}"
+                f"Unsupported roles in access token: {unknown_csv}"
             )
-        if is_admin:
-            parsed_roles.add(ROLE_ADMIN)
         return Actor(user_id=user_id, roles=frozenset(parsed_roles))

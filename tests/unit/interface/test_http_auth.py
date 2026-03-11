@@ -6,7 +6,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-def _make_app_with_env(monkeypatch) -> TestClient:
+def _make_app_with_env(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    bootstrap_admin_email: str | None = None,
+) -> TestClient:
     secret = "dev-jwt-secret-please-change-32-bytes"
     monkeypatch.setenv("JWT_ISSUER", "test-issuer")
     monkeypatch.setenv("JWT_AUDIENCE", "test-aud")
@@ -15,10 +19,34 @@ def _make_app_with_env(monkeypatch) -> TestClient:
     monkeypatch.setenv("JWT_ALGORITHMS", "HS256")
     monkeypatch.setenv("JWT_ACCESS_TTL_SECONDS", "60")
     monkeypatch.setenv("JWT_REFRESH_TTL_SECONDS", "120")
+    if bootstrap_admin_email:
+        monkeypatch.setenv("BOOTSTRAP_ADMIN_EMAIL", bootstrap_admin_email)
+    else:
+        monkeypatch.delenv("BOOTSTRAP_ADMIN_EMAIL", raising=False)
 
     from src.interface.http.app import create_app
 
     return TestClient(create_app())
+
+
+def _register_user(client: TestClient, email: str, password: str = "pass") -> str:
+    reg = client.post(
+        "/v1/auth/register",
+        json={"email": email, "password": password},
+    )
+    assert reg.status_code == 201
+    return reg.json()["user_id"]
+
+
+def _login_for_access_token(
+    client: TestClient, identifier: str, password: str = "pass"
+) -> str:
+    login = client.post(
+        "/v1/auth/login",
+        json={"identifier": identifier, "password": password},
+    )
+    assert login.status_code == 200
+    return login.json()["tokens"]["access_token"]
 
 
 def test_healthz(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -29,21 +57,10 @@ def test_healthz(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_register_and_login(monkeypatch: pytest.MonkeyPatch) -> None:
     client = _make_app_with_env(monkeypatch)
-
-    reg = client.post(
-        "/v1/auth/register",
-        json={"email": "user@example.com", "password": "pass"},
-    )
-    assert reg.status_code == 201
-
-    login = client.post(
-        "/v1/auth/login",
-        json={"identifier": "user@example.com", "password": "pass"},
-    )
-    assert login.status_code == 200
-    data = login.json()
-    assert "access_token" in data["tokens"]
-    assert "refresh_token" in data["tokens"]
+    email = f"user-{uuid4()}@example.com"
+    _register_user(client, email=email)
+    token = _login_for_access_token(client, identifier=email)
+    assert token
 
 
 def test_login_invalid(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -55,64 +72,56 @@ def test_login_invalid(monkeypatch: pytest.MonkeyPatch) -> None:
     assert resp.status_code == 401
 
 
-def test_admin_role_header_allows_admin_route(monkeypatch: pytest.MonkeyPatch) -> None:
-    client = _make_app_with_env(monkeypatch)
-    reg = client.post(
-        "/v1/auth/register",
-        json={"email": "role-user@example.com", "password": "pass"},
-    )
-    assert reg.status_code == 201
-    user_id = reg.json()["user_id"]
+def test_admin_bearer_token_allows_admin_route(monkeypatch: pytest.MonkeyPatch) -> None:
+    admin_email = f"admin-{uuid4()}@example.com"
+    client = _make_app_with_env(monkeypatch, bootstrap_admin_email=admin_email)
+    _register_user(client, email=admin_email)
+    access_token = _login_for_access_token(client, identifier=admin_email)
+    target_user_id = _register_user(client, email=f"role-user-{uuid4()}@example.com")
 
     response = client.post(
-        f"/v1/admin/users/{user_id}/roles",
+        f"/v1/admin/users/{target_user_id}/roles",
         json={"role": "support"},
-        headers={
-            "X-Actor-Id": str(uuid4()),
-            "X-Actor-Roles": "admin,auditor",
-        },
+        headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 204
 
 
-def test_legacy_admin_header_allows_admin_route(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    client = _make_app_with_env(monkeypatch)
-    reg = client.post(
-        "/v1/auth/register",
-        json={"email": "legacy-admin@example.com", "password": "pass"},
-    )
-    assert reg.status_code == 201
-    user_id = reg.json()["user_id"]
+def test_non_admin_bearer_token_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    admin_email = f"admin-{uuid4()}@example.com"
+    client = _make_app_with_env(monkeypatch, bootstrap_admin_email=admin_email)
+    user_email = f"user-{uuid4()}@example.com"
+    _register_user(client, email=user_email)
+    access_token = _login_for_access_token(client, identifier=user_email)
+    target_user_id = _register_user(client, email=f"target-{uuid4()}@example.com")
 
     response = client.post(
-        f"/v1/admin/users/{user_id}/roles",
+        f"/v1/admin/users/{target_user_id}/roles",
         json={"role": "auditor"},
-        headers={
-            "X-Actor-Id": str(uuid4()),
-            "X-Actor-Admin": "true",
-        },
+        headers={"Authorization": f"Bearer {access_token}"},
     )
-    assert response.status_code == 204
+    assert response.status_code == 403
 
 
-def test_unknown_actor_role_header_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_missing_bearer_token_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     client = _make_app_with_env(monkeypatch)
-    reg = client.post(
-        "/v1/auth/register",
-        json={"email": "unknown-role@example.com", "password": "pass"},
-    )
-    assert reg.status_code == 201
-    user_id = reg.json()["user_id"]
-
+    target_user_id = _register_user(client, email=f"target-{uuid4()}@example.com")
     response = client.post(
-        f"/v1/admin/users/{user_id}/roles",
+        f"/v1/admin/users/{target_user_id}/roles",
         json={"role": "auditor"},
-        headers={
-            "X-Actor-Id": str(uuid4()),
-            "X-Actor-Roles": "admin,superuser",
-        },
     )
     assert response.status_code == 401
-    assert "Unsupported roles in X-Actor-Roles" in response.text
+    assert "Bearer access token is required" in response.text
+
+
+def test_invalid_bearer_token_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _make_app_with_env(monkeypatch)
+    target_user_id = _register_user(client, email=f"target-{uuid4()}@example.com")
+
+    response = client.post(
+        f"/v1/admin/users/{target_user_id}/roles",
+        json={"role": "auditor"},
+        headers={"Authorization": "Bearer not-a-token"},
+    )
+    assert response.status_code == 401
+    assert "Invalid access token" in response.text

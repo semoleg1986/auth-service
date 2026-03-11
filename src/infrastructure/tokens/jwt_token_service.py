@@ -68,3 +68,26 @@ class JwtTokenService:
         token_id = UUID(str(payload["jti"]))
         user_id = UUID(str(payload["sub"]))
         return token_id, user_id
+
+    def decode_access_token(self, access_token: str) -> tuple[UUID, list[str]]:
+        payload = jwt.decode(
+            access_token,
+            key=self._settings.public_key_pem,
+            algorithms=list(self._settings.algorithms),
+            audience=self._settings.audience,
+            issuer=self._settings.issuer,
+            options={"require": ["exp", "sub", "iss", "aud"]},
+        )
+        user_id = UUID(str(payload["sub"]))
+        raw_roles = payload.get("roles", [])
+        if isinstance(raw_roles, list):
+            roles = [
+                str(role).strip().lower() for role in raw_roles if str(role).strip()
+            ]
+        elif isinstance(raw_roles, str):
+            roles = [
+                role.strip().lower() for role in raw_roles.split(",") if role.strip()
+            ]
+        else:
+            roles = []
+        return user_id, roles

@@ -32,7 +32,22 @@ def test_access_token_contains_optional_org_id() -> None:
     assert token.endswith(":school-1")
 
 
+def test_decode_access_token_round_trip() -> None:
+    service = InMemoryTokenService()
+    user_id = uuid4()
+    access = service.issue_access_token(user_id=user_id, roles=["admin", "support"])
+    out_user_id, out_roles = service.decode_access_token(access)
+    assert out_user_id == user_id
+    assert out_roles == ["admin", "support"]
+
+
 def test_decode_refresh_token_invalid_uuid_raises() -> None:
     service = InMemoryTokenService()
     with pytest.raises(ValueError):
         service.decode_refresh_token("refresh:bad:bad")
+
+
+def test_decode_access_token_invalid_prefix_raises() -> None:
+    service = InMemoryTokenService()
+    with pytest.raises(ValueError):
+        service.decode_access_token("bad:token")

@@ -47,10 +47,29 @@ def test_decode_refresh_token_round_trip_hs256() -> None:
     assert out_user_id == user_id
 
 
+def test_decode_access_token_round_trip_hs256() -> None:
+    service = JwtTokenService(_hs_settings())
+    user_id = uuid4()
+    access = service.issue_access_token(
+        user_id=user_id,
+        roles=["admin", "support"],
+        org_id="school-1",
+    )
+    out_user_id, out_roles = service.decode_access_token(access)
+    assert out_user_id == user_id
+    assert out_roles == ["admin", "support"]
+
+
 def test_decode_refresh_token_rejects_invalid_token() -> None:
     service = JwtTokenService(_hs_settings())
     with pytest.raises(Exception):
         service.decode_refresh_token("invalid.token")
+
+
+def test_decode_access_token_rejects_invalid_token() -> None:
+    service = JwtTokenService(_hs_settings())
+    with pytest.raises(Exception):
+        service.decode_access_token("invalid.token")
 
 
 def test_init_rs256_uses_kid_builder(monkeypatch) -> None:

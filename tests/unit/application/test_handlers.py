@@ -131,6 +131,13 @@ class SimpleTokenService(TokenService):
             raise ValueError("Invalid refresh token")
         return UUID(token_id), UUID(user_id)
 
+    def decode_access_token(self, access_token: str) -> tuple[UUID, list[str]]:
+        prefix, user_id, roles_str, _org_id = access_token.split(":", 3)
+        if prefix != "access":
+            raise ValueError("Invalid access token")
+        roles = [role for role in roles_str.split(",") if role]
+        return UUID(user_id), roles
+
 
 @pytest.fixture()
 def user_repo() -> InMemoryUserRepo:
