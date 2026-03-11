@@ -13,6 +13,7 @@ from src.application.commands import (
     LogoutCommand,
     RefreshCommand,
     RegisterCommand,
+    RevokeSessionCommand,
     UnblockUserCommand,
 )
 from src.application.dtos.auth import AuthTokens
@@ -30,6 +31,7 @@ from src.application.handlers import (
     handle_logout,
     handle_refresh,
     handle_register,
+    handle_revoke_session,
     handle_unblock_user,
 )
 from src.application.ports.crypto import PasswordHasher
@@ -666,3 +668,39 @@ def test_list_role_assignments_denied(uow: InMemoryUoW) -> None:
         handle_list_role_assignments(
             ListRoleAssignmentsQuery(user_id=user_id), uow=uow, actor=other
         )
+
+
+def test_revoke_session_admin_only(
+    uow: InMemoryUoW,
+    time_provider: FixedTime,
+    now: datetime,
+) -> None:
+    account = UserAccount(user_id=uuid4(), email="user@example.com")
+    uow.user_repo.save(account)
+    session = Session(
+        token_id=uuid4(),
+        user_id=account.user_id,
+        expires_at=now + timedelta(minutes=30),
+    )
+    uow.session_repo.save(session)
+
+    user = Actor(user_id=uuid4(), is_admin=False)
+    with pytest.raises(AccessDeniedError):
+        handle_revoke_session(
+            RevokeSessionCommand(user_id=account.user_id, token_id=session.token_id),
+            uow=uow,
+            actor=user,
+            time_provider=time_provider,
+        )
+
+    admin = Actor(user_id=uuid4(), is_admin=True)
+    handle_revoke_session(
+        RevokeSessionCommand(user_id=account.user_id, token_id=session.token_id),
+        uow=uow,
+        actor=admin,
+        time_provider=time_provider,
+    )
+    revoked_session = uow.session_repo.get_by_id(session.token_id)
+    assert revoked_session is not None
+    assert revoked_session.revoked_at == time_provider.now()
+    assert revoked_session.revoke_reason == "admin_revoked"

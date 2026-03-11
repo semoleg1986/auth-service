@@ -108,6 +108,87 @@ def test_non_admin_bearer_token_is_rejected(monkeypatch: pytest.MonkeyPatch) -> 
     assert response.status_code == 403
 
 
+def test_admin_can_list_roles_and_sessions(monkeypatch: pytest.MonkeyPatch) -> None:
+    admin_email = f"admin-{uuid4()}@example.com"
+    client = _make_app_with_env(monkeypatch, bootstrap_admin_email=admin_email)
+    _register_user(client, email=admin_email)
+    admin_access_token = _login_for_access_token(client, identifier=admin_email)
+
+    user_email = f"user-{uuid4()}@example.com"
+    user_id = _register_user(client, email=user_email)
+    user_login = client.post(
+        "/v1/auth/login",
+        json={"identifier": user_email, "password": "pass"},
+    )
+    assert user_login.status_code == 200
+    user_refresh_token = user_login.json()["tokens"]["refresh_token"]
+    refresh_res = client.post(
+        "/v1/auth/refresh",
+        json={"refresh_token": user_refresh_token},
+    )
+    assert refresh_res.status_code == 200
+
+    roles_res = client.get(
+        f"/v1/admin/users/{user_id}/roles",
+        headers={"Authorization": f"Bearer {admin_access_token}"},
+    )
+    assert roles_res.status_code == 200
+    assert "user" in roles_res.json()["roles"]
+
+    sessions_res = client.get(
+        f"/v1/admin/users/{user_id}/sessions",
+        headers={"Authorization": f"Bearer {admin_access_token}"},
+    )
+    assert sessions_res.status_code == 200
+    sessions = sessions_res.json()
+    assert len(sessions) >= 1
+    assert all(item["user_id"] == user_id for item in sessions)
+
+
+def test_admin_can_revoke_user_session(monkeypatch: pytest.MonkeyPatch) -> None:
+    admin_email = f"admin-{uuid4()}@example.com"
+    client = _make_app_with_env(monkeypatch, bootstrap_admin_email=admin_email)
+    _register_user(client, email=admin_email)
+    admin_access_token = _login_for_access_token(client, identifier=admin_email)
+
+    user_email = f"user-{uuid4()}@example.com"
+    user_id = _register_user(client, email=user_email)
+    user_login = client.post(
+        "/v1/auth/login",
+        json={"identifier": user_email, "password": "pass"},
+    )
+    assert user_login.status_code == 200
+
+    sessions_res = client.get(
+        f"/v1/admin/users/{user_id}/sessions",
+        headers={"Authorization": f"Bearer {admin_access_token}"},
+    )
+    assert sessions_res.status_code == 200
+    sessions = sessions_res.json()
+    assert sessions
+    token_id = sessions[0]["token_id"]
+
+    revoke_res = client.post(
+        f"/v1/admin/users/{user_id}/sessions/{token_id}/revoke",
+        headers={"Authorization": f"Bearer {admin_access_token}"},
+    )
+    assert revoke_res.status_code == 204
+
+    sessions_after_res = client.get(
+        f"/v1/admin/users/{user_id}/sessions",
+        headers={"Authorization": f"Bearer {admin_access_token}"},
+    )
+    assert sessions_after_res.status_code == 200
+    sessions_after = sessions_after_res.json()
+    revoked = next(
+        (item for item in sessions_after if item["token_id"] == token_id),
+        None,
+    )
+    assert revoked is not None
+    assert revoked["revoke_reason"] == "admin_revoked"
+    assert revoked["revoked_at"] is not None
+
+
 def test_missing_bearer_token_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     client = _make_app_with_env(monkeypatch)
     target_user_id = _register_user(client, email=f"target-{uuid4()}@example.com")

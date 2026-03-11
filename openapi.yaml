@@ -222,6 +222,103 @@
         "title": "RegisterResponse",
         "type": "object"
       },
+      "RoleAssignmentsResponse": {
+        "properties": {
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "roles"
+        ],
+        "title": "RoleAssignmentsResponse",
+        "type": "object"
+      },
+      "SessionResponse": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "ip_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip Address"
+          },
+          "revoke_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoke Reason"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "token_id": {
+            "title": "Token Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "user_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Agent"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token_id",
+          "user_id",
+          "created_at",
+          "updated_at",
+          "expires_at"
+        ],
+        "title": "SessionResponse",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -477,6 +574,148 @@
       }
     },
     "/v1/admin/users/{user_id}/roles": {
+      "get": {
+        "operationId": "list_roles_v1_admin_users__user_id__roles_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleAssignmentsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Invalid credentials",
+                  "instance": "/v1/auth/login",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 401,
+                  "title": "Unauthorized",
+                  "type": "https://example.com/problems/unauthorized"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Access denied",
+                  "instance": "/v1/admin/users/roles",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 403,
+                  "title": "Access Denied",
+                  "type": "https://example.com/problems/access-denied"
+                }
+              }
+            },
+            "description": "Access denied"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "User not found",
+                  "instance": "/v1/admin/users/123e4567-e89b-12d3-a456-426614174000",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 404,
+                  "title": "Not Found",
+                  "type": "https://example.com/problems/not-found"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "User already exists",
+                  "instance": "/v1/auth/register",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 409,
+                  "title": "Conflict",
+                  "type": "https://example.com/problems/conflict"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: auth_login",
+                  "instance": "/v1/auth/login",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 429,
+                  "title": "Too Many Requests",
+                  "type": "https://example.com/problems/too-many-requests"
+                }
+              }
+            },
+            "description": "Too many requests"
+          }
+        },
+        "summary": "List Roles",
+        "tags": [
+          "admin",
+          "admin"
+        ]
+      },
       "post": {
         "operationId": "assign_role_v1_admin_users__user_id__roles_post",
         "parameters": [
@@ -617,6 +856,301 @@
           }
         },
         "summary": "Assign Role",
+        "tags": [
+          "admin",
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/users/{user_id}/sessions": {
+      "get": {
+        "operationId": "list_user_sessions_v1_admin_users__user_id__sessions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessionResponse"
+                  },
+                  "title": "Response List User Sessions V1 Admin Users  User Id  Sessions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Invalid credentials",
+                  "instance": "/v1/auth/login",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 401,
+                  "title": "Unauthorized",
+                  "type": "https://example.com/problems/unauthorized"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Access denied",
+                  "instance": "/v1/admin/users/roles",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 403,
+                  "title": "Access Denied",
+                  "type": "https://example.com/problems/access-denied"
+                }
+              }
+            },
+            "description": "Access denied"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "User not found",
+                  "instance": "/v1/admin/users/123e4567-e89b-12d3-a456-426614174000",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 404,
+                  "title": "Not Found",
+                  "type": "https://example.com/problems/not-found"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "User already exists",
+                  "instance": "/v1/auth/register",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 409,
+                  "title": "Conflict",
+                  "type": "https://example.com/problems/conflict"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: auth_login",
+                  "instance": "/v1/auth/login",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 429,
+                  "title": "Too Many Requests",
+                  "type": "https://example.com/problems/too-many-requests"
+                }
+              }
+            },
+            "description": "Too many requests"
+          }
+        },
+        "summary": "List User Sessions",
+        "tags": [
+          "admin",
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/users/{user_id}/sessions/{token_id}/revoke": {
+      "post": {
+        "operationId": "revoke_user_session_v1_admin_users__user_id__sessions__token_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "token_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Token Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Invalid credentials",
+                  "instance": "/v1/auth/login",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 401,
+                  "title": "Unauthorized",
+                  "type": "https://example.com/problems/unauthorized"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Access denied",
+                  "instance": "/v1/admin/users/roles",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 403,
+                  "title": "Access Denied",
+                  "type": "https://example.com/problems/access-denied"
+                }
+              }
+            },
+            "description": "Access denied"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "User not found",
+                  "instance": "/v1/admin/users/123e4567-e89b-12d3-a456-426614174000",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 404,
+                  "title": "Not Found",
+                  "type": "https://example.com/problems/not-found"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "User already exists",
+                  "instance": "/v1/auth/register",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 409,
+                  "title": "Conflict",
+                  "type": "https://example.com/problems/conflict"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: auth_login",
+                  "instance": "/v1/auth/login",
+                  "request_id": "4b1c5f8c-7f2b-4e7f-8f7a-6b76a0e3f6a1",
+                  "status": 429,
+                  "title": "Too Many Requests",
+                  "type": "https://example.com/problems/too-many-requests"
+                }
+              }
+            },
+            "description": "Too many requests"
+          }
+        },
+        "summary": "Revoke User Session",
         "tags": [
           "admin",
           "admin"
