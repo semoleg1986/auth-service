@@ -34,6 +34,7 @@ from src.interface.http.v1.auth_router import router as auth_router
 from src.interface.http.wiring import init_persistence
 
 logger = logging.getLogger("auth_service.http")
+_SENSITIVE_PATHS = frozenset({"/v1/auth/login", "/v1/auth/refresh"})
 
 
 def create_app() -> FastAPI:
@@ -74,6 +75,7 @@ def create_app() -> FastAPI:
                 "method": request.method,
                 "path": request.url.path,
                 "status_code": response.status_code,
+                "payload_redacted": request.url.path in _SENSITIVE_PATHS,
             },
         )
         return response
