@@ -5,44 +5,36 @@ import json
 import os
 import threading
 import time
-from dataclasses import dataclass
 from urllib.error import URLError
 from urllib.parse import quote
 from urllib.request import urlopen
+
+from src.application.dtos import GeoLocation
 
 _DEFAULT_TIMEOUT_SECONDS = 2
 _DEFAULT_CACHE_TTL_SECONDS = 900
 _DEFAULT_PROVIDER_TEMPLATE = "https://ipwho.is/{ip}"
 
 _CACHE_LOCK = threading.Lock()
-_CACHE: dict[str, tuple[float, "GeoLookupResult"]] = {}
+_CACHE: dict[str, tuple[float, GeoLocation]] = {}
 
 
-@dataclass(frozen=True)
-class GeoLookupResult:
-    city: str | None = None
-    region: str | None = None
-    country: str | None = None
-    display: str | None = None
+class IpWhoIsGeoLookup:
+    def lookup_by_ip(self, ip_address: str | None) -> GeoLocation:
+        return lookup_geo_by_ip(ip_address)
 
 
-def lookup_geo_by_ip(ip_address: str | None) -> GeoLookupResult:
-    """
-    Разрешить гео-метаданные по IP через внешний провайдер.
-
-    Lookup опционален и выключен по умолчанию:
-    AUTH_GEO_LOOKUP_ENABLED=true.
-    """
+def lookup_geo_by_ip(ip_address: str | None) -> GeoLocation:
     if not _env_bool("AUTH_GEO_LOOKUP_ENABLED", default=False):
-        return GeoLookupResult()
+        return GeoLocation()
     if not ip_address:
-        return GeoLookupResult()
+        return GeoLocation()
 
     normalized_ip = _normalize_ip(ip_address)
     if normalized_ip is None:
-        return GeoLookupResult()
+        return GeoLocation()
     if not _is_public_ip(normalized_ip):
-        return GeoLookupResult()
+        return GeoLocation()
 
     cache_ttl = _env_int(
         "AUTH_GEO_LOOKUP_CACHE_TTL_SECONDS",
@@ -61,7 +53,7 @@ def lookup_geo_by_ip(ip_address: str | None) -> GeoLookupResult:
     return resolved
 
 
-def _fetch_geo_from_provider(ip_address: str) -> GeoLookupResult:
+def _fetch_geo_from_provider(ip_address: str) -> GeoLocation:
     timeout_seconds = _env_int(
         "AUTH_GEO_LOOKUP_TIMEOUT_SECONDS",
         default=_DEFAULT_TIMEOUT_SECONDS,
@@ -79,18 +71,18 @@ def _fetch_geo_from_provider(ip_address: str) -> GeoLookupResult:
         with urlopen(url, timeout=timeout_seconds) as response:
             payload = response.read()
     except (TimeoutError, URLError, OSError):
-        return GeoLookupResult()
+        return GeoLocation()
 
     try:
         decoded = json.loads(payload.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError):
-        return GeoLookupResult()
+        return GeoLocation()
     if not isinstance(decoded, dict):
-        return GeoLookupResult()
+        return GeoLocation()
 
     success = decoded.get("success")
     if success is False:
-        return GeoLookupResult()
+        return GeoLocation()
 
     city = _clean(decoded.get("city"))
     region = _clean(decoded.get("region")) or _clean(decoded.get("region_name"))
@@ -100,7 +92,7 @@ def _fetch_geo_from_provider(ip_address: str) -> GeoLookupResult:
         or _clean(decoded.get("countryName"))
     )
     display = _build_display(city=city, region=region, country=country)
-    return GeoLookupResult(city=city, region=region, country=country, display=display)
+    return GeoLocation(city=city, region=region, country=country, display=display)
 
 
 def _normalize_ip(value: str) -> str | None:

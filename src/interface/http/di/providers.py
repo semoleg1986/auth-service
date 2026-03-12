@@ -10,10 +10,12 @@ from fastapi import Request
 from src.application.actor_context import ActorContext
 from src.application.errors import AuthenticationError
 from src.application.ports.crypto import PasswordHasher
+from src.application.ports.geo_lookup import GeoLookupPort
 from src.application.ports.jwks import JwksProvider
 from src.application.ports.time import TimeProvider
 from src.application.ports.tokens import TokenService
 from src.application.unit_of_work import UnitOfWork
+from src.infrastructure.clients.geo import IpWhoIsGeoLookup, NoopGeoLookup
 from src.infrastructure.crypto.argon2_hasher import Argon2PasswordHasher
 from src.infrastructure.crypto.simple_hasher import SimplePasswordHasher
 from src.infrastructure.persistence.uow.in_memory_uow import InMemoryUnitOfWork
@@ -42,6 +44,13 @@ class AppProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_password_hasher(self) -> PasswordHasher:
         return _HASHER
+
+    @provide(scope=Scope.APP)
+    def provide_geo_lookup(self) -> GeoLookupPort:
+        enabled = os.getenv("AUTH_GEO_LOOKUP_ENABLED", "").strip().lower()
+        if enabled in {"1", "true", "yes", "on"}:
+            return IpWhoIsGeoLookup()
+        return NoopGeoLookup()
 
     @provide(scope=Scope.APP)
     def provide_jwks_provider(self) -> JwksProvider:

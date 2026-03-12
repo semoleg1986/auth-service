@@ -1,20 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from fastapi import Request
+
+from src.application.dtos import GeoLocation
 
 _USER_AGENT_MAX_LEN = 512
 _GEO_VALUE_MAX_LEN = 128
 _GEO_DISPLAY_MAX_LEN = 255
-
-
-@dataclass(frozen=True)
-class GeoMetadata:
-    city: str | None = None
-    region: str | None = None
-    country: str | None = None
-    display: str | None = None
 
 
 def extract_client_ip(request: Request) -> str | None:
@@ -46,7 +38,7 @@ def extract_user_agent(request: Request) -> str | None:
     return _truncate(user_agent, _USER_AGENT_MAX_LEN)
 
 
-def extract_geo_metadata(request: Request) -> GeoMetadata:
+def extract_geo_metadata(request: Request) -> GeoLocation:
     city = _first_existing_header(
         request,
         (
@@ -75,7 +67,7 @@ def extract_geo_metadata(request: Request) -> GeoMetadata:
     region = _truncate(region, _GEO_VALUE_MAX_LEN)
     country = _truncate(country, _GEO_VALUE_MAX_LEN)
     display = _build_geo_display(city=city, region=region, country=country)
-    return GeoMetadata(city=city, region=region, country=country, display=display)
+    return GeoLocation(city=city, region=region, country=country, display=display)
 
 
 def _first_existing_header(request: Request, names: tuple[str, ...]) -> str | None:
