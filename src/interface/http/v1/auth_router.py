@@ -19,6 +19,7 @@ from src.application.ports.crypto import PasswordHasher
 from src.application.ports.time import TimeProvider
 from src.application.ports.tokens import TokenService
 from src.application.unit_of_work import UnitOfWork
+from src.interface.http.geo_lookup import lookup_geo_by_ip
 from src.interface.http.request_client import (
     extract_client_ip,
     extract_geo_metadata,
@@ -78,17 +79,30 @@ def login(
     token_service: FromDishka[TokenService],
     time_provider: FromDishka[TimeProvider],
 ) -> LoginResponse:
+    client_ip = extract_client_ip(request)
     geo = extract_geo_metadata(request)
+    if not any((geo.city, geo.region, geo.country)):
+        resolved = lookup_geo_by_ip(client_ip)
+        geo_city = resolved.city
+        geo_region = resolved.region
+        geo_country = resolved.country
+        geo_display = resolved.display
+    else:
+        geo_city = geo.city
+        geo_region = geo.region
+        geo_country = geo.country
+        geo_display = geo.display
+
     result = handle_login(
         LoginCommand(
             identifier=body.identifier,
             password=body.password,
-            ip_address=extract_client_ip(request),
+            ip_address=client_ip,
             user_agent=extract_user_agent(request),
-            geo_city=geo.city,
-            geo_region=geo.region,
-            geo_country=geo.country,
-            geo_display=geo.display,
+            geo_city=geo_city,
+            geo_region=geo_region,
+            geo_country=geo_country,
+            geo_display=geo_display,
         ),
         uow=uow,
         password_hasher=password_hasher,

@@ -22,6 +22,7 @@
 - reuse-detection: повторный refresh старым токеном отзывает все активные сессии пользователя
 - admin endpoints требуют Bearer access token и проверку ролей
 - role model: `user`, `admin`, `content_manager`, `auditor`, `support`
+- session telemetry: `ip_address`, `user_agent`, `geo_city`, `geo_region`, `geo_country`, `geo_display`
 
 ## Быстрый запуск
 ```bash
@@ -80,6 +81,12 @@ export DATABASE_URL=postgresql+asyncpg://auth_user:asawakan@<POSTGRES_HOST>:<POS
 - `AUTO_MIGRATE_ON_START=true`
 - `MIGRATION_MAX_RETRIES=20`
 - `MIGRATION_RETRY_DELAY=2`
+
+Опциональный geo lookup (если нет `X-Geo-*` заголовков):
+- `AUTH_GEO_LOOKUP_ENABLED=false`
+- `AUTH_GEO_LOOKUP_URL_TEMPLATE=https://ipwho.is/{ip}`
+- `AUTH_GEO_LOOKUP_TIMEOUT_SECONDS=2`
+- `AUTH_GEO_LOOKUP_CACHE_TTL_SECONDS=900`
 
 Остановка:
 ```bash
