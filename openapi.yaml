@@ -1,5 +1,61 @@
 {
   "components": {
+    "responses": {
+      "Forbidden": {
+        "content": {
+          "application/problem+json": {
+            "example": {
+              "code": "FORBIDDEN",
+              "detail": "Access denied",
+              "request_id": "00000000-0000-4000-8000-000000000000",
+              "status": 403,
+              "title": "Forbidden",
+              "type": "https://example.com/problems/access-denied"
+            },
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            }
+          }
+        },
+        "description": "Forbidden"
+      },
+      "TooManyRequests": {
+        "content": {
+          "application/problem+json": {
+            "example": {
+              "code": "RATE_LIMITED",
+              "detail": "Rate limit exceeded",
+              "request_id": "00000000-0000-4000-8000-000000000000",
+              "status": 429,
+              "title": "Too Many Requests",
+              "type": "https://example.com/problems/too-many-requests"
+            },
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            }
+          }
+        },
+        "description": "Too Many Requests"
+      },
+      "Unauthorized": {
+        "content": {
+          "application/problem+json": {
+            "example": {
+              "code": "UNAUTHORIZED",
+              "detail": "Bearer access token is required",
+              "request_id": "00000000-0000-4000-8000-000000000000",
+              "status": 401,
+              "title": "Unauthorized",
+              "type": "https://example.com/problems/authentication"
+            },
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            }
+          }
+        },
+        "description": "Unauthorized"
+      }
+    },
     "schemas": {
       "AssignRoleRequest": {
         "properties": {
@@ -403,27 +459,36 @@
         "title": "ValidationError",
         "type": "object"
       }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "bearerFormat": "JWT",
+        "scheme": "bearer",
+        "type": "http"
+      }
     }
   },
   "info": {
     "title": "Auth Service",
-    "version": "0.1.0"
+    "version": "v0.3.1"
   },
   "openapi": "3.1.0",
   "paths": {
     "/.well-known/jwks.json": {
       "get": {
-        "operationId": "jwks__well_known_jwks_json_get",
+        "operationId": "getWellKnownJwksJson",
         "responses": {
           "200": {
             "content": {
               "application/json": {
+                "example": "string",
                 "schema": {}
               }
             },
             "description": "Successful Response"
           }
         },
+        "security": [],
         "summary": "Jwks",
         "tags": [
           "jwks"
@@ -432,11 +497,14 @@
     },
     "/healthz": {
       "get": {
-        "operationId": "healthz_healthz_get",
+        "operationId": "getHealthz",
         "responses": {
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "key": "string"
+                },
                 "schema": {
                   "additionalProperties": {
                     "type": "string"
@@ -449,6 +517,7 @@
             "description": "Successful Response"
           }
         },
+        "security": [],
         "summary": "Healthz",
         "tags": [
           "health"
@@ -457,11 +526,14 @@
     },
     "/readyz": {
       "get": {
-        "operationId": "readyz_readyz_get",
+        "operationId": "getReadyz",
         "responses": {
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "key": "string"
+                },
                 "schema": {
                   "additionalProperties": {
                     "type": "string"
@@ -474,6 +546,7 @@
             "description": "Successful Response"
           }
         },
+        "security": [],
         "summary": "Readyz",
         "tags": [
           "health"
@@ -482,7 +555,7 @@
     },
     "/v1/admin/users/{user_id}/block": {
       "post": {
-        "operationId": "block_user_v1_admin_users__user_id__block_post",
+        "operationId": "postAdminUsersBlockByUserId",
         "parameters": [
           {
             "in": "path",
@@ -610,6 +683,11 @@
             "description": "Too many requests"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Block User",
         "tags": [
           "admin",
@@ -619,7 +697,7 @@
     },
     "/v1/admin/users/{user_id}/roles": {
       "get": {
-        "operationId": "list_roles_v1_admin_users__user_id__roles_get",
+        "operationId": "getAdminUsersRolesByUserId",
         "parameters": [
           {
             "in": "path",
@@ -636,6 +714,11 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "roles": [
+                    "string"
+                  ]
+                },
                 "schema": {
                   "$ref": "#/components/schemas/RoleAssignmentsResponse"
                 }
@@ -754,6 +837,11 @@
             "description": "Too many requests"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "List Roles",
         "tags": [
           "admin",
@@ -761,7 +849,7 @@
         ]
       },
       "post": {
-        "operationId": "assign_role_v1_admin_users__user_id__roles_post",
+        "operationId": "postAdminUsersRolesByUserId",
         "parameters": [
           {
             "in": "path",
@@ -777,6 +865,9 @@
         "requestBody": {
           "content": {
             "application/json": {
+              "example": {
+                "role": "user"
+              },
               "schema": {
                 "$ref": "#/components/schemas/AssignRoleRequest"
               }
@@ -899,6 +990,11 @@
             "description": "Too many requests"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Assign Role",
         "tags": [
           "admin",
@@ -908,7 +1004,7 @@
     },
     "/v1/admin/users/{user_id}/sessions": {
       "get": {
-        "operationId": "list_user_sessions_v1_admin_users__user_id__sessions_get",
+        "operationId": "getAdminUsersSessionsByUserId",
         "parameters": [
           {
             "in": "path",
@@ -925,6 +1021,15 @@
           "200": {
             "content": {
               "application/json": {
+                "example": [
+                  {
+                    "created_at": "2026-03-13T00:00:00Z",
+                    "expires_at": "2026-03-13T00:00:00Z",
+                    "token_id": "string",
+                    "updated_at": "2026-03-13T00:00:00Z",
+                    "user_id": "string"
+                  }
+                ],
                 "schema": {
                   "items": {
                     "$ref": "#/components/schemas/SessionResponse"
@@ -1047,6 +1152,11 @@
             "description": "Too many requests"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "List User Sessions",
         "tags": [
           "admin",
@@ -1056,7 +1166,7 @@
     },
     "/v1/admin/users/{user_id}/sessions/{token_id}/revoke": {
       "post": {
-        "operationId": "revoke_user_session_v1_admin_users__user_id__sessions__token_id__revoke_post",
+        "operationId": "postAdminUsersSessionsRevokeByUserIdAndTokenId",
         "parameters": [
           {
             "in": "path",
@@ -1194,6 +1304,11 @@
             "description": "Too many requests"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Revoke User Session",
         "tags": [
           "admin",
@@ -1203,7 +1318,7 @@
     },
     "/v1/admin/users/{user_id}/unblock": {
       "post": {
-        "operationId": "unblock_user_v1_admin_users__user_id__unblock_post",
+        "operationId": "postAdminUsersUnblockByUserId",
         "parameters": [
           {
             "in": "path",
@@ -1331,6 +1446,11 @@
             "description": "Too many requests"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Unblock User",
         "tags": [
           "admin",
@@ -1340,10 +1460,14 @@
     },
     "/v1/auth/login": {
       "post": {
-        "operationId": "login_v1_auth_login_post",
+        "operationId": "postAuthLogin",
         "requestBody": {
           "content": {
             "application/json": {
+              "example": {
+                "identifier": "string",
+                "password": "string"
+              },
               "schema": {
                 "$ref": "#/components/schemas/LoginRequest"
               }
@@ -1355,6 +1479,13 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "tokens": {
+                    "access_token": "string",
+                    "refresh_token": "string"
+                  },
+                  "user_id": "string"
+                },
                 "schema": {
                   "$ref": "#/components/schemas/LoginResponse"
                 }
@@ -1473,6 +1604,7 @@
             "description": "Too many requests"
           }
         },
+        "security": [],
         "summary": "Login",
         "tags": [
           "auth",
@@ -1482,10 +1614,13 @@
     },
     "/v1/auth/logout": {
       "post": {
-        "operationId": "logout_v1_auth_logout_post",
+        "operationId": "postAuthLogout",
         "requestBody": {
           "content": {
             "application/json": {
+              "example": {
+                "refresh_token": "string"
+              },
               "schema": {
                 "$ref": "#/components/schemas/LogoutRequest"
               }
@@ -1608,6 +1743,7 @@
             "description": "Too many requests"
           }
         },
+        "security": [],
         "summary": "Logout",
         "tags": [
           "auth",
@@ -1617,10 +1753,13 @@
     },
     "/v1/auth/refresh": {
       "post": {
-        "operationId": "refresh_v1_auth_refresh_post",
+        "operationId": "postAuthRefresh",
         "requestBody": {
           "content": {
             "application/json": {
+              "example": {
+                "refresh_token": "string"
+              },
               "schema": {
                 "$ref": "#/components/schemas/RefreshRequest"
               }
@@ -1632,6 +1771,10 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "access_token": "string",
+                  "refresh_token": "string"
+                },
                 "schema": {
                   "$ref": "#/components/schemas/AuthTokensResponse"
                 }
@@ -1750,6 +1893,7 @@
             "description": "Too many requests"
           }
         },
+        "security": [],
         "summary": "Refresh",
         "tags": [
           "auth",
@@ -1759,10 +1903,16 @@
     },
     "/v1/auth/register": {
       "post": {
-        "operationId": "register_v1_auth_register_post",
+        "operationId": "postAuthRegister",
         "requestBody": {
           "content": {
             "application/json": {
+              "example": {
+                "email": "string",
+                "org_id": "string",
+                "password": "string",
+                "phone": "string"
+              },
               "schema": {
                 "$ref": "#/components/schemas/RegisterRequest"
               }
@@ -1774,6 +1924,9 @@
           "201": {
             "content": {
               "application/json": {
+                "example": {
+                  "user_id": "string"
+                },
                 "schema": {
                   "$ref": "#/components/schemas/RegisterResponse"
                 }
@@ -1892,6 +2045,7 @@
             "description": "Too many requests"
           }
         },
+        "security": [],
         "summary": "Register",
         "tags": [
           "auth",
@@ -1899,5 +2053,20 @@
         ]
       }
     }
-  }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "servers": [
+    {
+      "description": "Local",
+      "url": "http://localhost:8000"
+    },
+    {
+      "description": "Production",
+      "url": "https://api.monitoring.example"
+    }
+  ]
 }
