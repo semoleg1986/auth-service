@@ -70,6 +70,10 @@ def handle_refresh(
         expires_at=session.expires_at,
         ip_address=session.ip_address,
         user_agent=session.user_agent,
+        geo_city=session.geo_city,
+        geo_region=session.geo_region,
+        geo_country=session.geo_country,
+        geo_display=session.geo_display,
     )
     uow.session_repo.save(rotated_session)
     refresh_token = token_service.issue_refresh_token(

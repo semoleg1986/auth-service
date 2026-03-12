@@ -285,6 +285,50 @@ def test_login_success(
     assert uow.committed is True
 
 
+def test_login_stores_session_client_metadata(
+    uow: InMemoryUoW,
+    hasher: SimpleHasher,
+    tokens: SimpleTokenService,
+    time_provider: FixedTime,
+) -> None:
+    account = UserAccount(user_id=uuid4(), email="user@example.com")
+    account.add_credential(
+        Credential(
+            credential_id=uuid4(), type="password", secret_hash=hasher.hash("pass")
+        )
+    )
+    account.assign_role(Role(name="user"))
+    uow.user_repo.save(account)
+
+    result = handle_login(
+        LoginCommand(
+            identifier="user@example.com",
+            password="pass",
+            ip_address="89.168.77.132",
+            user_agent="Mozilla/5.0",
+            geo_city="Batumi",
+            geo_region="Adjara",
+            geo_country="Georgia",
+            geo_display="Batumi, Adjara, Georgia",
+        ),
+        uow=uow,
+        password_hasher=hasher,
+        token_service=tokens,
+        time_provider=time_provider,
+        refresh_ttl_seconds=3600,
+    )
+
+    token_id, _ = tokens.decode_refresh_token(result.tokens.refresh_token)
+    session = uow.session_repo.get_by_id(token_id)
+    assert session is not None
+    assert session.ip_address == "89.168.77.132"
+    assert session.user_agent == "Mozilla/5.0"
+    assert session.geo_city == "Batumi"
+    assert session.geo_region == "Adjara"
+    assert session.geo_country == "Georgia"
+    assert session.geo_display == "Batumi, Adjara, Georgia"
+
+
 def test_login_success_rehashes_legacy_secret(
     uow: InMemoryUoW,
     tokens: SimpleTokenService,
@@ -450,7 +494,15 @@ def test_refresh_success(
     uow.user_repo.save(account)
 
     session = Session(
-        token_id=uuid4(), user_id=account.user_id, expires_at=now + timedelta(minutes=5)
+        token_id=uuid4(),
+        user_id=account.user_id,
+        expires_at=now + timedelta(minutes=5),
+        ip_address="89.168.77.132",
+        user_agent="Mozilla/5.0",
+        geo_city="Batumi",
+        geo_region="Adjara",
+        geo_country="Georgia",
+        geo_display="Batumi, Adjara, Georgia",
     )
     uow.session_repo.save(session)
     refresh_token = tokens.issue_refresh_token(
@@ -469,6 +521,15 @@ def test_refresh_success(
     assert tokens_out.refresh_token.startswith("refresh:")
     assert tokens_out.refresh_token != refresh_token
     assert uow.session_repo.get_by_id(session.token_id).revoke_reason == "rotated"
+    rotated_token_id, _ = tokens.decode_refresh_token(tokens_out.refresh_token)
+    rotated_session = uow.session_repo.get_by_id(rotated_token_id)
+    assert rotated_session is not None
+    assert rotated_session.ip_address == "89.168.77.132"
+    assert rotated_session.user_agent == "Mozilla/5.0"
+    assert rotated_session.geo_city == "Batumi"
+    assert rotated_session.geo_region == "Adjara"
+    assert rotated_session.geo_country == "Georgia"
+    assert rotated_session.geo_display == "Batumi, Adjara, Georgia"
 
 
 def test_refresh_reuse_detected_revokes_all_sessions(

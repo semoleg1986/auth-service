@@ -25,6 +25,10 @@ class SqlAlchemySessionRepository:
             revoke_reason=model.revoke_reason,
             ip_address=model.ip_address,
             user_agent=model.user_agent,
+            geo_city=model.geo_city,
+            geo_region=model.geo_region,
+            geo_country=model.geo_country,
+            geo_display=model.geo_display,
         )
 
     def get_by_id(self, token_id: UUID) -> Session | None:
@@ -49,6 +53,10 @@ class SqlAlchemySessionRepository:
         model.revoke_reason = session.revoke_reason
         model.ip_address = session.ip_address
         model.user_agent = session.user_agent
+        model.geo_city = session.geo_city
+        model.geo_region = session.geo_region
+        model.geo_country = session.geo_country
+        model.geo_display = session.geo_display
 
     def revoke(self, token_id: UUID) -> None:
         model = self._db.get(SessionModel, token_id)

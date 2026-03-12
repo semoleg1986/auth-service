@@ -33,6 +33,10 @@ class Session:
     revoke_reason: str | None = None
     ip_address: str | None = None
     user_agent: str | None = None
+    geo_city: str | None = None
+    geo_region: str | None = None
+    geo_country: str | None = None
+    geo_display: str | None = None
 
     def revoke(self, *, at: datetime, reason: str | None = None) -> None:
         """

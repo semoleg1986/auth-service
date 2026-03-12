@@ -19,7 +19,8 @@ from src.domain.policies.access_policy import AccessPolicy
 class _PasswordHashUpgrader(Protocol):
     def upgrade_hash_if_needed(
         self, *, password: str, password_hash: str
-    ) -> str | None: ...
+    ) -> str | None:
+        ...
 
 
 def handle_login(
@@ -105,6 +106,12 @@ def handle_login(
         token_id=uuid4(),
         user_id=account.user_id,
         expires_at=now + timedelta(seconds=refresh_ttl_seconds),
+        ip_address=command.ip_address,
+        user_agent=command.user_agent,
+        geo_city=command.geo_city,
+        geo_region=command.geo_region,
+        geo_country=command.geo_country,
+        geo_display=command.geo_display,
     )
     uow.user_repo.save(account)
     uow.session_repo.save(session)

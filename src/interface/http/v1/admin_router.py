@@ -122,6 +122,10 @@ def list_user_sessions(
             revoke_reason=item.revoke_reason,
             ip_address=item.ip_address,
             user_agent=item.user_agent,
+            geo_city=item.geo_city,
+            geo_region=item.geo_region,
+            geo_country=item.geo_country,
+            geo_display=item.geo_display,
         )
         for item in sorted_sessions
     ]

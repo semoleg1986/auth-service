@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Request, Response, status
 
 from src.application.commands import (
     LoginCommand,
@@ -19,6 +19,11 @@ from src.application.ports.crypto import PasswordHasher
 from src.application.ports.time import TimeProvider
 from src.application.ports.tokens import TokenService
 from src.application.unit_of_work import UnitOfWork
+from src.interface.http.request_client import (
+    extract_client_ip,
+    extract_geo_metadata,
+    extract_user_agent,
+)
 from src.interface.http.v1.error_responses import ERROR_RESPONSES
 from src.interface.http.v1.schemas import (
     AuthTokensResponse,
@@ -67,13 +72,24 @@ def register(
 )
 def login(
     body: LoginRequest,
+    request: Request,
     uow: FromDishka[UnitOfWork],
     password_hasher: FromDishka[PasswordHasher],
     token_service: FromDishka[TokenService],
     time_provider: FromDishka[TimeProvider],
 ) -> LoginResponse:
+    geo = extract_geo_metadata(request)
     result = handle_login(
-        LoginCommand(identifier=body.identifier, password=body.password),
+        LoginCommand(
+            identifier=body.identifier,
+            password=body.password,
+            ip_address=extract_client_ip(request),
+            user_agent=extract_user_agent(request),
+            geo_city=geo.city,
+            geo_region=geo.region,
+            geo_country=geo.country,
+            geo_display=geo.display,
+        ),
         uow=uow,
         password_hasher=password_hasher,
         token_service=token_service,

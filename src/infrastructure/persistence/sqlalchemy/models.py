@@ -136,5 +136,9 @@ class SessionModel(Base):
     revoke_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     ip_address: Mapped[str | None] = mapped_column(String(64), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    geo_city: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    geo_region: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    geo_country: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    geo_display: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     user: Mapped[UserAccountModel] = relationship(back_populates="sessions")

@@ -9,6 +9,8 @@ from dataclasses import dataclass
 
 from fastapi import Request
 
+from src.interface.http.request_client import extract_client_ip
+
 
 @dataclass(frozen=True)
 class RateLimitRule:
@@ -78,12 +80,7 @@ class RequestRateLimiter:
 
     @staticmethod
     def _extract_client_id(request: Request) -> str:
-        forwarded_for = request.headers.get("X-Forwarded-For", "").strip()
-        if forwarded_for:
-            return forwarded_for.split(",")[0].strip() or "unknown"
-        if request.client and request.client.host:
-            return request.client.host
-        return "unknown"
+        return extract_client_ip(request) or "unknown"
 
 
 def load_rate_limit_rules_from_env() -> tuple[RateLimitRule, ...]:

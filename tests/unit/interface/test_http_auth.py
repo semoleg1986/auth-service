@@ -119,6 +119,13 @@ def test_admin_can_list_roles_and_sessions(monkeypatch: pytest.MonkeyPatch) -> N
     user_login = client.post(
         "/v1/auth/login",
         json={"identifier": user_email, "password": "pass"},
+        headers={
+            "X-Forwarded-For": "89.168.77.132",
+            "User-Agent": "E2E-Client/1.0",
+            "X-Geo-City": "Batumi",
+            "X-Geo-Region": "Adjara",
+            "X-Geo-Country": "Georgia",
+        },
     )
     assert user_login.status_code == 200
     user_refresh_token = user_login.json()["tokens"]["refresh_token"]
@@ -143,6 +150,13 @@ def test_admin_can_list_roles_and_sessions(monkeypatch: pytest.MonkeyPatch) -> N
     sessions = sessions_res.json()
     assert len(sessions) >= 1
     assert all(item["user_id"] == user_id for item in sessions)
+    latest = sessions[0]
+    assert latest["ip_address"] == "89.168.77.132"
+    assert latest["user_agent"] == "E2E-Client/1.0"
+    assert latest["geo_city"] == "Batumi"
+    assert latest["geo_region"] == "Adjara"
+    assert latest["geo_country"] == "Georgia"
+    assert latest["geo_display"] == "Batumi, Adjara, Georgia"
 
 
 def test_admin_can_revoke_user_session(monkeypatch: pytest.MonkeyPatch) -> None:
