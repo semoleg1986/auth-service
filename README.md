@@ -75,6 +75,12 @@ make docker-up
 export DATABASE_URL=postgresql+asyncpg://auth_user:asawakan@<POSTGRES_HOST>:<POSTGRES_PORT>/auth_db
 ```
 
+По умолчанию контейнер применяет миграции автоматически при старте (`alembic upgrade head`).
+Это поведение управляется env-переменными:
+- `AUTO_MIGRATE_ON_START=true`
+- `MIGRATION_MAX_RETRIES=20`
+- `MIGRATION_RETRY_DELAY=2`
+
 Остановка:
 ```bash
 make docker-down
@@ -122,7 +128,7 @@ make db-downgrade
 make db-revision MSG="add something"
 ```
 
-Важно: при включенном `DATABASE_URL` перед `make run` сначала выполни `make db-upgrade`.
+Важно: для `make run` (без Docker) при включенном `DATABASE_URL` сначала выполни `make db-upgrade`.
 
 ## Контракт
 - OpenAPI: `/Users/olegsemenov/Programming/monitoring/auth-service/openapi.yaml`

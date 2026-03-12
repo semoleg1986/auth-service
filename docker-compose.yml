@@ -11,6 +11,9 @@ services:
       APP_ENV: dev
       AUTH_HASH_SECRET: change-me
       DATABASE_URL: ${DATABASE_URL}
+      AUTO_MIGRATE_ON_START: ${AUTO_MIGRATE_ON_START:-true}
+      MIGRATION_MAX_RETRIES: ${MIGRATION_MAX_RETRIES:-20}
+      MIGRATION_RETRY_DELAY: ${MIGRATION_RETRY_DELAY:-2}
       JWT_ISSUER: auth-service
       JWT_AUDIENCE: user-children-service
       JWT_ALGORITHMS: ${JWT_ALGORITHMS}
@@ -19,9 +22,6 @@ services:
       JWT_ACCESS_TTL_SECONDS: 900
       JWT_REFRESH_TTL_SECONDS: 604800
       PROBLEM_TYPE_BASE_URL: https://example.com/problems
-    command: >
-      sh -c "alembic upgrade head &&
-             uvicorn src.interface.http.main:app --host 0.0.0.0 --port 8000"
     ports:
       - "8000:8000"
     extra_hosts:
