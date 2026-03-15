@@ -1,11 +1,11 @@
-from .assign_role import AssignRoleCommand
-from .block_user import BlockUserCommand
-from .login import LoginCommand
-from .logout import LogoutCommand
-from .refresh import RefreshCommand
-from .register import RegisterCommand
-from .revoke_session import RevokeSessionCommand
-from .unblock_user import UnblockUserCommand
+from src.application.access.commands.assign_role import AssignRoleCommand
+from src.application.identity.commands.block_user import BlockUserCommand
+from src.application.identity.commands.register import RegisterCommand
+from src.application.identity.commands.unblock_user import UnblockUserCommand
+from src.application.session.commands.login import LoginCommand
+from src.application.session.commands.logout import LogoutCommand
+from src.application.session.commands.refresh import RefreshCommand
+from src.application.session.commands.revoke_session import RevokeSessionCommand
 
 __all__ = [
     "AssignRoleCommand",

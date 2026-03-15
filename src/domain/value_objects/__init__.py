@@ -1,5 +1,4 @@
-from .account_status import AccountStatus
-from .role import (
+from src.domain.access.role import (
     ALLOWED_ROLE_NAMES,
     ROLE_ADMIN,
     ROLE_AUDITOR,
@@ -8,6 +7,7 @@ from .role import (
     ROLE_USER,
     Role,
 )
+from src.domain.identity.account_status import AccountStatus
 
 __all__ = [
     "Role",

@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
+from src.domain.access.access_policy import AccessPolicy, Actor
 from src.domain.aggregates.account import Session, UserAccount
-from src.domain.policies.access_policy import AccessPolicy, Actor
 from src.domain.value_objects import ROLE_AUDITOR, ROLE_SUPPORT, AccountStatus
 
 
