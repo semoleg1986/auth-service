@@ -7,6 +7,10 @@ from uuid import UUID, uuid4
 import pytest
 
 from src.application.access.commands.assign_role import AssignRoleCommand
+from src.application.access.handlers import (
+    handle_assign_role,
+    handle_list_role_assignments,
+)
 from src.application.access.queries.list_role_assignments import (
     ListRoleAssignmentsQuery,
 )
@@ -17,21 +21,14 @@ from src.application.errors import (
     AuthenticationError,
     InvariantViolationError,
 )
-from src.application.handlers import (
-    handle_assign_role,
-    handle_block_user,
-    handle_list_role_assignments,
-    handle_list_sessions,
-    handle_login,
-    handle_logout,
-    handle_refresh,
-    handle_register,
-    handle_revoke_session,
-    handle_unblock_user,
-)
 from src.application.identity.commands.block_user import BlockUserCommand
 from src.application.identity.commands.register import RegisterCommand
 from src.application.identity.commands.unblock_user import UnblockUserCommand
+from src.application.identity.handlers import (
+    handle_block_user,
+    handle_register,
+    handle_unblock_user,
+)
 from src.application.ports.crypto import PasswordHasher
 from src.application.ports.time import TimeProvider
 from src.application.ports.tokens import TokenService
@@ -39,6 +36,13 @@ from src.application.session.commands.login import LoginCommand
 from src.application.session.commands.logout import LogoutCommand
 from src.application.session.commands.refresh import RefreshCommand
 from src.application.session.commands.revoke_session import RevokeSessionCommand
+from src.application.session.handlers import (
+    handle_list_sessions,
+    handle_login,
+    handle_logout,
+    handle_refresh,
+    handle_revoke_session,
+)
 from src.application.session.queries.list_sessions import ListSessionsQuery
 from src.application.unit_of_work import UnitOfWork
 from src.domain.access.role import ROLE_ADMIN, Role
