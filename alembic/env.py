@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
-from src.infrastructure.persistence.sqlalchemy.models import Base
+from src.infrastructure.db.models import Base
 
 # Alembic Config object, provides access to values in alembic.ini.
 config = context.config
