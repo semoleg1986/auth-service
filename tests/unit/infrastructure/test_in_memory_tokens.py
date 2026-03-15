@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from src.infrastructure.tokens.in_memory_token_service import InMemoryTokenService
+from src.infrastructure.security.in_memory_token_service import InMemoryTokenService
 
 
 def test_token_service_round_trip() -> None:

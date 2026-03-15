@@ -5,8 +5,8 @@ from uuid import uuid4
 import jwt
 import pytest
 
-from src.infrastructure.tokens.jwt_settings import JwtSettings
-from src.infrastructure.tokens.jwt_token_service import JwtTokenService
+from src.infrastructure.security.jwt_settings import JwtSettings
+from src.infrastructure.security.jwt_token_service import JwtTokenService
 
 
 def _hs_settings() -> JwtSettings:
@@ -80,7 +80,7 @@ def test_init_rs256_uses_kid_builder(monkeypatch) -> None:
         return {"kid": "kid-1"}
 
     monkeypatch.setattr(
-        "src.infrastructure.tokens.jwt_token_service.build_jwk_with_kid", _fake_build
+        "src.infrastructure.security.jwt_token_service.build_jwk_with_kid", _fake_build
     )
     settings = JwtSettings(
         issuer="auth-service",

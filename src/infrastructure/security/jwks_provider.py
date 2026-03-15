@@ -4,8 +4,8 @@ from typing import Any
 
 from src.application.errors import ServiceConfigurationError
 from src.application.ports.jwks import JwksProvider
-from src.infrastructure.tokens.jwk_utils import build_jwk_with_kid
-from src.infrastructure.tokens.jwt_settings import load_jwt_settings
+from src.infrastructure.security.jwk_utils import build_jwk_with_kid
+from src.infrastructure.security.jwt_settings import load_jwt_settings
 
 
 class JwtJwksProvider(JwksProvider):

@@ -5,8 +5,8 @@ from uuid import UUID
 
 import jwt
 
-from src.infrastructure.tokens.jwk_utils import build_jwk_with_kid
-from src.infrastructure.tokens.jwt_settings import JwtSettings
+from src.infrastructure.security.jwk_utils import build_jwk_with_kid
+from src.infrastructure.security.jwt_settings import JwtSettings
 
 
 class JwtTokenService:

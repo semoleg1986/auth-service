@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.infrastructure.tokens.jwk_utils import build_jwk_with_kid, compute_kid
+from src.infrastructure.security.jwk_utils import build_jwk_with_kid, compute_kid
 
 _PUBLIC_KEY_PEM = """-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgym/QvZ8lngiSHuiojg8

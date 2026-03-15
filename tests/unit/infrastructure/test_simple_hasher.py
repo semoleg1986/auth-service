@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.infrastructure.crypto.simple_hasher import SimplePasswordHasher
+from src.infrastructure.security.simple_hasher import SimplePasswordHasher
 
 
 def test_simple_hasher_hash_and_verify() -> None:

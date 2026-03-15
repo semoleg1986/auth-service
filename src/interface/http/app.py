@@ -14,7 +14,7 @@ from src.application.errors import (
     InvariantViolationError,
     NotFoundError,
 )
-from src.infrastructure.tokens.jwt_settings import load_jwt_settings
+from src.infrastructure.security.jwt_settings import load_jwt_settings
 from src.interface.http.di import AppProvider
 from src.interface.http.errors import (
     access_denied_handler,

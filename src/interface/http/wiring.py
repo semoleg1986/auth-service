@@ -18,7 +18,7 @@ def init_persistence() -> None:
 
     if os.getenv("DATABASE_URL"):
         try:
-            from src.infrastructure.persistence.sqlalchemy import get_session_factory
+            from src.infrastructure.db import get_session_factory
         except ModuleNotFoundError as exc:
             raise RuntimeError(
                 "DATABASE_URL is set but SQLAlchemy dependencies are not installed. "

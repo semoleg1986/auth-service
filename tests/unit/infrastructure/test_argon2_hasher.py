@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from src.infrastructure.crypto.argon2_hasher import Argon2PasswordHasher
-from src.infrastructure.crypto.simple_hasher import SimplePasswordHasher
+from src.infrastructure.security.argon2_hasher import Argon2PasswordHasher
+from src.infrastructure.security.simple_hasher import SimplePasswordHasher
 
 
 def test_argon2_hash_and_verify_round_trip() -> None:

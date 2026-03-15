@@ -16,12 +16,12 @@ from src.application.ports.time import TimeProvider
 from src.application.ports.tokens import TokenService
 from src.application.unit_of_work import UnitOfWork
 from src.infrastructure.clients.geo import IpWhoIsGeoLookup, NoopGeoLookup
-from src.infrastructure.crypto.argon2_hasher import Argon2PasswordHasher
-from src.infrastructure.crypto.simple_hasher import SimplePasswordHasher
-from src.infrastructure.persistence.uow.in_memory_uow import InMemoryUnitOfWork
-from src.infrastructure.tokens.jwks_provider import JwtJwksProvider
-from src.infrastructure.tokens.jwt_settings import load_jwt_settings
-from src.infrastructure.tokens.jwt_token_service import JwtTokenService
+from src.infrastructure.db.uow.in_memory_uow import InMemoryUnitOfWork
+from src.infrastructure.security.argon2_hasher import Argon2PasswordHasher
+from src.infrastructure.security.jwks_provider import JwtJwksProvider
+from src.infrastructure.security.jwt_settings import load_jwt_settings
+from src.infrastructure.security.jwt_token_service import JwtTokenService
+from src.infrastructure.security.simple_hasher import SimplePasswordHasher
 
 _IN_MEMORY_UOW = InMemoryUnitOfWork()
 _HASHER = Argon2PasswordHasher(
@@ -63,10 +63,8 @@ class AppProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def provide_uow(self) -> Iterator[UnitOfWork]:
         if os.getenv("DATABASE_URL"):
-            from src.infrastructure.persistence.sqlalchemy import get_session_factory
-            from src.infrastructure.persistence.uow.sqlalchemy_uow import (
-                SqlAlchemyUnitOfWork,
-            )
+            from src.infrastructure.db import get_session_factory
+            from src.infrastructure.db.uow.sqlalchemy_uow import SqlAlchemyUnitOfWork
 
             session_factory = get_session_factory()
             if session_factory is None:
