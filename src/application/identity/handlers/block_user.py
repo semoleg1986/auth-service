@@ -4,7 +4,7 @@ from src.application.actor_context import ActorContext
 from src.application.errors import AccessDeniedError, NotFoundError
 from src.application.identity.commands.block_user import BlockUserCommand
 from src.application.unit_of_work import UnitOfWork
-from src.domain.access.access_policy import AccessPolicy
+from src.domain.access.policies import AccessPolicy
 
 
 def handle_block_user(

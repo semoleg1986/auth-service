@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Protocol
 from uuid import UUID
 
-from src.domain.identity import UserAccount
+from src.domain.identity.entity import UserAccount
 
 
 class UserAccountRepository(Protocol):

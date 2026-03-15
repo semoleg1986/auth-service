@@ -6,9 +6,7 @@ from uuid import UUID
 
 from src.domain.access.role import Role
 from src.domain.errors import InvariantViolationError
-from src.domain.identity.account_status import AccountStatus
-
-from .credential import Credential
+from src.domain.identity.value_objects import AccountStatus, Credential
 
 
 def _utcnow() -> datetime:

@@ -5,7 +5,7 @@ from src.application.errors import AccessDeniedError, NotFoundError
 from src.application.ports.time import TimeProvider
 from src.application.session.commands.revoke_session import RevokeSessionCommand
 from src.application.unit_of_work import UnitOfWork
-from src.domain.access.access_policy import AccessPolicy
+from src.domain.access.policies import AccessPolicy
 
 
 def handle_revoke_session(

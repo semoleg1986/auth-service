@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from src.domain.identity import UserAccount
+from src.domain.identity.entity import UserAccount
 
 
 class InMemoryUserAccountRepository:

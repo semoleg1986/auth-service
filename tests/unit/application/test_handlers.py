@@ -46,10 +46,9 @@ from src.application.session.handlers import (
 from src.application.session.queries.list_sessions import ListSessionsQuery
 from src.application.unit_of_work import UnitOfWork
 from src.domain.access.role import ROLE_ADMIN, Role
-from src.domain.identity.account_status import AccountStatus
-from src.domain.identity.credential import Credential
-from src.domain.identity.user_account import UserAccount
-from src.domain.session.session import Session
+from src.domain.identity.entity import UserAccount
+from src.domain.identity.value_objects import AccountStatus, Credential
+from src.domain.session.entity import Session
 
 
 @dataclass

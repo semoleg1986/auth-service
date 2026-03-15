@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Iterable
 from uuid import UUID
 
-from src.domain.access.access_policy import Actor
+from src.domain.access.actor import Actor
 from src.domain.access.role import ALLOWED_ROLE_NAMES
 
 

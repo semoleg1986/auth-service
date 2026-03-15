@@ -4,8 +4,8 @@ from src.application.access.queries.list_role_assignments import (
 from src.application.actor_context import ActorContext
 from src.application.errors import AccessDeniedError, NotFoundError
 from src.application.unit_of_work import UnitOfWork
-from src.domain.access import Role
-from src.domain.access.access_policy import AccessPolicy
+from src.domain.access.policies import AccessPolicy
+from src.domain.access.role import Role
 
 
 def handle(

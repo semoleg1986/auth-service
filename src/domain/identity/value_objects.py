@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from enum import StrEnum
 from uuid import UUID
 
 from src.domain.errors import InvariantViolationError
@@ -9,6 +10,12 @@ from src.domain.errors import InvariantViolationError
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+class AccountStatus(StrEnum):
+    ACTIVE = "active"
+    BLOCKED = "blocked"
+    DELETED = "deleted"
 
 
 @dataclass(frozen=True)

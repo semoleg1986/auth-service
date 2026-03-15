@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID
 
-from src.domain.session import Session
+from src.domain.session.entity import Session
 
 
 class InMemorySessionRepository:

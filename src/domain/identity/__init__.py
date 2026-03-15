@@ -1,7 +1,6 @@
-from src.domain.identity.account_status import AccountStatus
-from src.domain.identity.credential import Credential
-from src.domain.identity.user_account import UserAccount
-from src.domain.identity.user_account_repository import UserAccountRepository
+from src.domain.identity.entity import UserAccount
+from src.domain.identity.repository import UserAccountRepository
+from src.domain.identity.value_objects import AccountStatus, Credential
 
 __all__ = [
     "AccountStatus",

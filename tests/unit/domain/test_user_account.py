@@ -7,9 +7,8 @@ import pytest
 
 from src.domain.access.role import ROLE_ADMIN, Role
 from src.domain.errors import InvariantViolationError
-from src.domain.identity.account_status import AccountStatus
-from src.domain.identity.credential import Credential
-from src.domain.identity.user_account import UserAccount
+from src.domain.identity.entity import UserAccount
+from src.domain.identity.value_objects import AccountStatus, Credential
 
 
 def test_user_account_requires_email_or_phone() -> None:

@@ -8,7 +8,7 @@ from src.application.errors import (
     NotFoundError,
 )
 from src.application.unit_of_work import UnitOfWork
-from src.domain.access.access_policy import AccessPolicy
+from src.domain.access.policies import AccessPolicy
 from src.domain.access.role import Role
 from src.domain.errors import InvariantViolationError as DomainInvariantError
 

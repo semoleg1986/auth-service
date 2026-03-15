@@ -5,8 +5,9 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from src.domain.access import Role
-from src.domain.identity import AccountStatus, Credential, UserAccount
+from src.domain.access.role import Role
+from src.domain.identity.entity import UserAccount
+from src.domain.identity.value_objects import AccountStatus, Credential
 from src.infrastructure.persistence.sqlalchemy.models import (
     CredentialModel,
     UserAccountModel,

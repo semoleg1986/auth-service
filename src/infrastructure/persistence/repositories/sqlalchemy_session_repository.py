@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DbSession
 
-from src.domain.session import Session
+from src.domain.session.entity import Session
 from src.infrastructure.persistence.sqlalchemy.models import SessionModel
 
 

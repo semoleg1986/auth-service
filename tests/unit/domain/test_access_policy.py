@@ -3,11 +3,12 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from src.domain.access.access_policy import AccessPolicy, Actor
+from src.domain.access.actor import Actor
+from src.domain.access.policies import AccessPolicy
 from src.domain.access.role import ROLE_AUDITOR, ROLE_SUPPORT
-from src.domain.identity.account_status import AccountStatus
-from src.domain.identity.user_account import UserAccount
-from src.domain.session.session import Session
+from src.domain.identity.entity import UserAccount
+from src.domain.identity.value_objects import AccountStatus
+from src.domain.session.entity import Session
 
 
 def test_admin_can_assign_role() -> None:

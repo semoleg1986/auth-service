@@ -2,8 +2,8 @@ from src.application.actor_context import ActorContext
 from src.application.errors import AccessDeniedError, NotFoundError
 from src.application.session.queries.list_sessions import ListSessionsQuery
 from src.application.unit_of_work import UnitOfWork
-from src.domain.access.access_policy import AccessPolicy
-from src.domain.session import Session
+from src.domain.access.policies import AccessPolicy
+from src.domain.session.entity import Session
 
 
 def handle(

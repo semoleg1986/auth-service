@@ -11,8 +11,8 @@ from src.application.ports.time import TimeProvider
 from src.application.ports.tokens import TokenService
 from src.application.session.commands.login import LoginCommand
 from src.application.unit_of_work import UnitOfWork
-from src.domain.access.access_policy import AccessPolicy
-from src.domain.session import Session
+from src.domain.access.policies import AccessPolicy
+from src.domain.session.entity import Session
 
 
 @runtime_checkable

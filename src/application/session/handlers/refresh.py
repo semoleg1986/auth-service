@@ -8,7 +8,7 @@ from src.application.ports.time import TimeProvider
 from src.application.ports.tokens import TokenService
 from src.application.session.commands.refresh import RefreshCommand
 from src.application.unit_of_work import UnitOfWork
-from src.domain.session import Session
+from src.domain.session.entity import Session
 
 
 def handle_refresh(
