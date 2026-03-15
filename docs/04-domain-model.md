@@ -2,92 +2,88 @@
 
 ## Назначение
 
-Фиксирует агрегаты и сущности auth-контекста.
+Документ фиксирует текущую структуру Domain Layer в `auth-service` после перехода на контекстную организацию пакетов.
 
-## Агрегаты
+## Структура Domain
 
-### 1. UserAccount (Aggregate Root)
-- **Атрибуты**:
-  - `user_id: UUID`
-  - `email: str | None`
-  - `phone: str | None`
-  - `org_id: str | None` (опциональная принадлежность к организации)
-  - `status: active | blocked | deleted`
-  - `created_at: datetime`
-  - `updated_at: datetime`
-  - `version: int`
-  - `last_login_at: datetime | None`
-  - `blocked_at: datetime | None`
-  - `status_reason: str | None`
-  - `roles: set[Role]`
-- **Поведение**:
-  - `assign_role(role)`
-  - `remove_role(role)`
-  - `block()` / `unblock()`
-  - `mark_login()`
-- **Инварианты**:
-  - хотя бы один идентификатор (email или phone)
-  - уникальность email/phone
-  - blocked не может логиниться
+```shell
+src/domain/
+├── access/
+│   ├── actor.py
+│   ├── policies.py
+│   └── role.py
+├── identity/
+│   ├── entity.py
+│   ├── repository.py
+│   └── value_objects.py
+├── session/
+│   ├── entity.py
+│   └── repository.py
+└── errors.py
+```
 
-### 2. Credential (Entity)
-- **Типы**:
-  - PasswordCredential
-  - OAuthCredential (опционально)
-- **Атрибуты**:
-  - `credential_id: UUID`
-  - `type: password | oauth`
-  - `secret_hash: str | None` (для password)
-  - `provider: str | None` (для oauth)
-  - `provider_user_id: str | None` (для oauth)
-  - `created_at: datetime`
-  - `updated_at: datetime`
-  - `last_used_at: datetime | None`
-  - `password_changed_at: datetime | None`
-  - `failed_attempts: int`
-  - `locked_until: datetime | None`
-- **Инварианты**:
-  - хранится только хеш
-  - нельзя иметь два одинаковых credential одного типа
+## Контекст `access`
 
-### 3. Session / RefreshToken (Entity)
-- **Атрибуты**:
-  - `token_id: UUID`
-  - `user_id: UUID`
-  - `created_at: datetime`
-  - `updated_at: datetime`
-  - `expires_at: datetime`
-  - `revoked_at: datetime | None`
-  - `revoke_reason: str | None`
-  - `ip_address: str | None`
-  - `user_agent: str | None`
-- **Поведение**:
-  - `revoke()`
-  - `is_active(now)`
+- `Actor` — контекст актора для policy-checks (`user_id`, `roles`, `is_admin` для совместимости).
+- `Role` — Value Object с жестким whitelist ролей:
+  - `user`, `admin`, `content_manager`, `auditor`, `support`.
+- `AccessPolicy` — доменные правила доступа:
+  - назначение ролей, блокировка/разблокировка;
+  - просмотр ролей/сессий (`self | admin | auditor | support`);
+  - проверка возможности логина/refresh.
 
-### 4. Role (Value Object)
-- **Атрибуты**:
-  - `name: str` (`user | admin | content_manager | auditor | support`)
-- **Правила**:
-  - присваивается через политики
+## Контекст `identity`
 
-## Репозитории (интерфейсы)
+### `UserAccount` (Aggregate Root)
 
-- **UserAccountRepository**
-  - `get_by_id(user_id)`
-  - `get_by_email(email)`
-  - `get_by_phone(phone)`
-  - `save(user_account)`
-- **SessionRepository**
-  - `get_by_id(token_id)`
-  - `save(session)`
-  - `revoke(token_id)`
-  - `list_by_user(user_id)`
-  - `revoke_all_by_user(user_id, reason)`
+- Поля:
+  - `user_id`, `email`, `phone`, `org_id`;
+  - `status`, `created_at`, `updated_at`, `version`;
+  - `last_login_at`, `blocked_at`, `status_reason`;
+  - `roles: set[Role]`;
+  - `credentials: list[Credential]`.
+- Поведение:
+  - роли: `assign_role`, `remove_role`;
+  - статус: `block`, `unblock`, `mark_login`;
+  - credential-поток: `add_credential`, `register_failed_password_attempt`,
+    `register_successful_password_login`, `replace_password_hash`.
 
-## Примечания
+### `Credential` (Value Object, immutable)
 
-1. Access token не является сущностью домена.
-2. RefreshToken хранится и управляется доменом.
-3. Доменные сущности не знают о HTTP, JWT или инфраструктуре.
-4. `org_id` сохраняется как опциональный атрибут и может пробрасываться в access token без активации B2B-правил.
+- Хранится в `identity/value_objects.py` как `@dataclass(frozen=True)`.
+- Поддерживает типы:
+  - `password` (`secret_hash` обязателен);
+  - `oauth` (`provider` и `provider_user_id` обязательны).
+- Ведет метаданные безопасности:
+  - `failed_attempts`, `locked_until`, `last_used_at`, `password_changed_at`.
+
+### `AccountStatus` (VO enum)
+
+- `active | blocked | deleted`.
+
+### `UserAccountRepository` (порт домена)
+
+- `get_by_id`, `get_by_email`, `get_by_phone`, `save`.
+
+## Контекст `session`
+
+### `Session` (Entity)
+
+- Refresh-session:
+  - `token_id`, `user_id`, `expires_at`, `revoked_at`, `revoke_reason`;
+  - metadata: `ip_address`, `user_agent`, `geo_city`, `geo_region`, `geo_country`, `geo_display`.
+- Поведение:
+  - `revoke(at, reason)`;
+  - `is_active(now)`.
+
+### `SessionRepository` (порт домена)
+
+- `get_by_id`, `save`, `revoke`, `list_by_user`, `revoke_all_by_user`.
+
+## Ключевые инварианты
+
+1. `UserAccount` обязан иметь хотя бы один идентификатор: `email` или `phone`.
+2. В аккаунте не может быть двух credential одного типа.
+3. Для `Credential(type=password)` обязательный `secret_hash`, для `oauth` — `provider + provider_user_id`.
+4. Сессия активна только если не отозвана и не истек срок `expires_at`.
+5. Domain Layer не содержит зависимостей на HTTP, JWT transport и SQLAlchemy.

@@ -2,110 +2,62 @@
 
 ## Назначение
 
-Оркестрация use cases auth-контекста.
-Application Layer связывает домен, политики и инфраструктуру (хранилище, криптография, время).
+Application Layer оркестрирует use-cases `auth-service`: связывает доменные агрегаты, policy-checks, порты инфраструктуры и транзакции.
 
-## Ответственность
-
-1. Проверка политик перед любым действием.
-2. Управление транзакциями и сессиями.
-3. Интеграция с Crypto/JWT инфраструктурой.
-4. Возврат DTO для внешнего интерфейса.
-5. Преобразование application actor context в domain actor для policy-checks.
-
-## Реализация сценариев
-
-### 1. Register
-
-**Input**: email/phone, password
-
-**Шаги**:
-1. Проверить уникальность email/phone.
-2. Создать UserAccount и Credential.
-3. Сохранить агрегат.
-
-### 2. Login
-
-**Input**: идентификатор + пароль
-
-**Шаги**:
-1. Загрузить UserAccount.
-2. Проверить статус (not blocked).
-3. Проверить credential.
-4. Сгенерировать access + refresh токены.
-5. Обновить `UserAccount.last_login_at`.
-6. Обновить `Credential.last_used_at` для password-credential.
-7. Сохранить refresh session.
-
-### 3. Refresh
-
-**Input**: refresh token
-
-**Шаги**:
-1. Проверить сессию и срок действия.
-2. Проверить, что refresh не отозван.
-3. Отозвать старую сессию c `revoke_reason=rotated`.
-4. Создать новую сессию и выдать пару `access + refresh`.
-5. При повторном использовании уже ротированного refresh выполнить revoke всех активных сессий пользователя.
-
-### 4. Logout
-
-**Input**: refresh token
-
-**Шаги**:
-1. Найти refresh session.
-2. Отозвать сессию с заполнением `revoke_reason`.
-
-### 5. Assign Role
-
-**Input**: admin actor, user_id, role
-
-**Шаги**:
-1. Проверить policy (admin).
-2. Присвоить роль.
-3. Сохранить агрегат.
-
-### 6. List Roles
-
-**Input**: actor context, user_id
-
-**Шаги**:
-1. Загрузить UserAccount.
-2. Проверить policy `can_view_roles`.
-3. Вернуть список ролей пользователя.
-
-### 7. List Sessions
-
-**Input**: actor context, user_id
-
-**Шаги**:
-1. Загрузить UserAccount.
-2. Проверить policy `can_view_sessions`.
-3. Вернуть список сессий пользователя.
-
-### 8. Revoke Session
-
-**Input**: admin actor context, user_id, token_id
-
-**Шаги**:
-1. Проверить policy (admin).
-2. Найти session пользователя.
-3. Отозвать session с `revoke_reason=admin_revoked`.
-4. Сохранить изменения.
-
-## Структура (предложение)
+## Структура Application
 
 ```shell
-application/
+src/application/
+├── access/
+│   ├── commands/assign_role.py
+│   ├── handlers/{assign_role,list_role_assignments}.py
+│   └── queries/list_role_assignments.py
+├── identity/
+│   ├── commands/{register,block_user,unblock_user}.py
+│   └── handlers/{register,block_user,unblock_user}.py
+├── session/
+│   ├── commands/{login,refresh,logout,revoke_session}.py
+│   ├── handlers/{login,refresh,logout,revoke_session,list_sessions}.py
+│   └── queries/list_sessions.py
+├── dtos/{auth,geo}.py
+├── ports/{crypto,tokens,time,jwks,geo_lookup}.py
+├── services/geo_enricher.py
 ├── actor_context.py
-├── commands/
-├── handlers/
-├── dtos/
-├── ports/
 └── unit_of_work.py
 ```
 
-## Примечания
+## Команды и запросы
 
-- JWT и криптография находятся в Infrastructure.
-- Application Layer не зависит от HTTP.
+### Write-side (commands)
+
+- `identity`: `Register`, `BlockUser`, `UnblockUser`.
+- `session`: `Login`, `Refresh`, `Logout`, `RevokeSession`.
+- `access`: `AssignRole`.
+
+### Read-side (queries)
+
+- `session`: `ListSessions`.
+- `access`: `ListRoleAssignments`.
+
+## Порты и транзакции
+
+- `UnitOfWork`:
+  - `user_repo: UserAccountRepository`
+  - `session_repo: SessionRepository`
+  - `commit()`, `rollback()`.
+- Порты инфраструктуры:
+  - `PasswordHasher`, `TokenService`, `TimeProvider`, `JwksProvider`, `GeoLookupPort`.
+
+## Ключевые обязанности
+
+1. Преобразование `ActorContext -> domain.Actor` и запуск policy-checks (`AccessPolicy`).
+2. Оркестрация сценариев логина/refresh с ротацией refresh-сессий.
+3. Обновление security-состояния аккаунта (`failed_attempts`, `locked_until`, last login).
+4. Выдача DTO для interface-слоя без зависимости от HTTP/transport.
+5. Обогащение геоданных сессии через `services/geo_enricher.py` и `GeoLookupPort`.
+
+## Границы слоя
+
+- Application не знает о FastAPI/Nuxt/headers/cookies/status codes.
+- HTTP-мэппинг и валидация payload выполняются в interface-слое.
+- Доменная логика остается в `src/domain/*`; application только оркестрирует.
