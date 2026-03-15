@@ -3,7 +3,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from src.domain.aggregates.account import Session, UserAccount
+from src.domain.identity.user_account import UserAccount
+from src.domain.session.session import Session
 from src.infrastructure import InMemorySessionRepository, InMemoryUserAccountRepository
 
 

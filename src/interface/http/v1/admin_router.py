@@ -5,13 +5,11 @@ from uuid import UUID
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, status
 
-from src.application.actor_context import ActorContext
-from src.application.commands import (
-    AssignRoleCommand,
-    BlockUserCommand,
-    RevokeSessionCommand,
-    UnblockUserCommand,
+from src.application.access.commands.assign_role import AssignRoleCommand
+from src.application.access.queries.list_role_assignments import (
+    ListRoleAssignmentsQuery,
 )
+from src.application.actor_context import ActorContext
 from src.application.handlers import (
     handle_assign_role,
     handle_block_user,
@@ -20,8 +18,11 @@ from src.application.handlers import (
     handle_revoke_session,
     handle_unblock_user,
 )
+from src.application.identity.commands.block_user import BlockUserCommand
+from src.application.identity.commands.unblock_user import UnblockUserCommand
 from src.application.ports.time import TimeProvider
-from src.application.queries import ListRoleAssignmentsQuery, ListSessionsQuery
+from src.application.session.commands.revoke_session import RevokeSessionCommand
+from src.application.session.queries.list_sessions import ListSessionsQuery
 from src.application.unit_of_work import UnitOfWork
 from src.interface.http.v1.error_responses import ERROR_RESPONSES
 from src.interface.http.v1.schemas import (

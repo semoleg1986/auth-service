@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from src.domain.aggregates.account import Session
+from src.domain.session.session import Session
 
 
 def test_session_active_before_expiry() -> None:

@@ -5,9 +5,11 @@ from uuid import uuid4
 
 import pytest
 
-from src.domain.aggregates.account import Credential, UserAccount
+from src.domain.access.role import ROLE_ADMIN, Role
 from src.domain.errors import InvariantViolationError
-from src.domain.value_objects import ROLE_ADMIN, AccountStatus, Role
+from src.domain.identity.account_status import AccountStatus
+from src.domain.identity.credential import Credential
+from src.domain.identity.user_account import UserAccount
 
 
 def test_user_account_requires_email_or_phone() -> None:

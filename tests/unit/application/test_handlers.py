@@ -6,17 +6,11 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from src.application.actor_context import ActorContext
-from src.application.commands import (
-    AssignRoleCommand,
-    BlockUserCommand,
-    LoginCommand,
-    LogoutCommand,
-    RefreshCommand,
-    RegisterCommand,
-    RevokeSessionCommand,
-    UnblockUserCommand,
+from src.application.access.commands.assign_role import AssignRoleCommand
+from src.application.access.queries.list_role_assignments import (
+    ListRoleAssignmentsQuery,
 )
+from src.application.actor_context import ActorContext
 from src.application.dtos.auth import AuthTokens
 from src.application.errors import (
     AccessDeniedError,
@@ -35,13 +29,23 @@ from src.application.handlers import (
     handle_revoke_session,
     handle_unblock_user,
 )
+from src.application.identity.commands.block_user import BlockUserCommand
+from src.application.identity.commands.register import RegisterCommand
+from src.application.identity.commands.unblock_user import UnblockUserCommand
 from src.application.ports.crypto import PasswordHasher
 from src.application.ports.time import TimeProvider
 from src.application.ports.tokens import TokenService
-from src.application.queries import ListRoleAssignmentsQuery, ListSessionsQuery
+from src.application.session.commands.login import LoginCommand
+from src.application.session.commands.logout import LogoutCommand
+from src.application.session.commands.refresh import RefreshCommand
+from src.application.session.commands.revoke_session import RevokeSessionCommand
+from src.application.session.queries.list_sessions import ListSessionsQuery
 from src.application.unit_of_work import UnitOfWork
-from src.domain.aggregates.account import Credential, Session, UserAccount
-from src.domain.value_objects import ROLE_ADMIN, AccountStatus, Role
+from src.domain.access.role import ROLE_ADMIN, Role
+from src.domain.identity.account_status import AccountStatus
+from src.domain.identity.credential import Credential
+from src.domain.identity.user_account import UserAccount
+from src.domain.session.session import Session
 
 
 @dataclass

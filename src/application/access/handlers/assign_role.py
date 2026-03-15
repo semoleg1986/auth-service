@@ -9,8 +9,8 @@ from src.application.errors import (
 )
 from src.application.unit_of_work import UnitOfWork
 from src.domain.access.access_policy import AccessPolicy
+from src.domain.access.role import Role
 from src.domain.errors import InvariantViolationError as DomainInvariantError
-from src.domain.value_objects import Role
 
 
 def handle_assign_role(

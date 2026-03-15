@@ -5,7 +5,7 @@ from typing import Iterable
 from uuid import UUID
 
 from src.domain.access.access_policy import Actor
-from src.domain.value_objects import ALLOWED_ROLE_NAMES
+from src.domain.access.role import ALLOWED_ROLE_NAMES
 
 
 @dataclass(frozen=True)

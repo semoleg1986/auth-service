@@ -7,9 +7,9 @@ from src.application.errors import InvariantViolationError
 from src.application.identity.commands.register import RegisterCommand
 from src.application.ports.crypto import PasswordHasher
 from src.application.unit_of_work import UnitOfWork
+from src.domain.access.role import ROLE_ADMIN, ROLE_USER, Role
 from src.domain.errors import InvariantViolationError as DomainInvariantError
 from src.domain.identity import Credential, UserAccount
-from src.domain.value_objects import ROLE_ADMIN, ROLE_USER, Role
 
 
 def handle_register(

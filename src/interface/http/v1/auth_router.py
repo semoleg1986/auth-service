@@ -3,23 +3,21 @@ from __future__ import annotations
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Request, Response, status
 
-from src.application.commands import (
-    LoginCommand,
-    LogoutCommand,
-    RefreshCommand,
-    RegisterCommand,
-)
 from src.application.handlers import (
     handle_login,
     handle_logout,
     handle_refresh,
     handle_register,
 )
+from src.application.identity.commands.register import RegisterCommand
 from src.application.ports.crypto import PasswordHasher
 from src.application.ports.geo_lookup import GeoLookupPort
 from src.application.ports.time import TimeProvider
 from src.application.ports.tokens import TokenService
 from src.application.services import enrich_geo_location
+from src.application.session.commands.login import LoginCommand
+from src.application.session.commands.logout import LogoutCommand
+from src.application.session.commands.refresh import RefreshCommand
 from src.application.unit_of_work import UnitOfWork
 from src.interface.http.request_client import (
     extract_client_ip,

@@ -4,8 +4,10 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from src.domain.access.access_policy import AccessPolicy, Actor
-from src.domain.aggregates.account import Session, UserAccount
-from src.domain.value_objects import ROLE_AUDITOR, ROLE_SUPPORT, AccountStatus
+from src.domain.access.role import ROLE_AUDITOR, ROLE_SUPPORT
+from src.domain.identity.account_status import AccountStatus
+from src.domain.identity.user_account import UserAccount
+from src.domain.session.session import Session
 
 
 def test_admin_can_assign_role() -> None:
