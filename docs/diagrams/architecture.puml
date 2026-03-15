@@ -3,44 +3,50 @@
 skinparam shadowing false
 skinparam packageStyle rectangle
 
-package "Interface" {
-  [HTTP API]
+package "Interface (HTTP)" {
+  [App / Wiring]
+  [Health + JWKS]
+  [v1 Auth Router]
+  [v1 Admin Router]
 }
 
 package "Application" {
-  [Use Cases]
-  [Policies]
+  [Identity Context]
+  [Session Context]
+  [Access Context]
+  [Ports + UnitOfWork]
 }
 
 package "Domain" {
-  [UserAccount]
-  [Credential]
-  [Session]
-  [Role]
+  [identity]
+  [session]
+  [access]
 }
 
 package "Infrastructure" {
-  [UserAccountRepository]
-  [SessionRepository]
-  [JWT Signer]
-  [JWKS Publisher]
-  [Key Store]
-  [Database]
+  [db.repositories + db.uow]
+  [security.adapters]
+  [clients.geo]
 }
 
-[HTTP API] --> [Use Cases]
-[Use Cases] --> [Policies]
-[Use Cases] --> [UserAccount]
-[Use Cases] --> [Credential]
-[Use Cases] --> [Session]
-[Use Cases] --> [Role]
+[App / Wiring] --> [v1 Auth Router]
+[App / Wiring] --> [v1 Admin Router]
+[App / Wiring] --> [Health + JWKS]
 
-[UserAccountRepository] ..> [UserAccount]
-[SessionRepository] ..> [Session]
+[v1 Auth Router] --> [Identity Context]
+[v1 Auth Router] --> [Session Context]
+[v1 Admin Router] --> [Access Context]
+[v1 Admin Router] --> [Session Context]
 
-[JWT Signer] --> [Key Store]
-[JWKS Publisher] --> [Key Store]
+[Identity Context] --> [identity]
+[Session Context] --> [session]
+[Access Context] --> [access]
 
-[UserAccountRepository] --> [Database]
-[SessionRepository] --> [Database]
+[Identity Context] --> [Ports + UnitOfWork]
+[Session Context] --> [Ports + UnitOfWork]
+[Access Context] --> [Ports + UnitOfWork]
+
+[db.repositories + db.uow] ..> [Ports + UnitOfWork]
+[security.adapters] ..> [Ports + UnitOfWork]
+[clients.geo] ..> [Ports + UnitOfWork]
 @enduml
