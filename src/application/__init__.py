@@ -1,3 +1,7 @@
+from .access.handlers.list_role_assignments import (
+    handle as handle_list_role_assignments,
+)
+from .access.queries.list_role_assignments import ListRoleAssignmentsQuery
 from .actor_context import ActorContext
 from .errors import (
     AccessDeniedError,
@@ -7,8 +11,8 @@ from .errors import (
     NotFoundError,
     ServiceConfigurationError,
 )
-from .handlers import handle_list_role_assignments, handle_list_sessions
-from .queries import ListRoleAssignmentsQuery, ListSessionsQuery
+from .session.handlers.list_sessions import handle as handle_list_sessions
+from .session.queries.list_sessions import ListSessionsQuery
 
 __all__ = [
     "ActorContext",
