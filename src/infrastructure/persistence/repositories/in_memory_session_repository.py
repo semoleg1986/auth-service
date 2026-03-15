@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID
 
-from src.domain.aggregates.account import Session
+from src.domain.session import Session
 
 
 class InMemorySessionRepository:
@@ -20,9 +20,7 @@ class InMemorySessionRepository:
         session = self._sessions.get(token_id)
         if session is not None:
             now = datetime.now(timezone.utc)
-            session.revoked_at = now
-            session.updated_at = now
-            session.revoke_reason = "logout"
+            session.revoke(at=now, reason="logout")
 
     def list_by_user(self, user_id: UUID) -> list[Session]:
         return [s for s in self._sessions.values() if s.user_id == user_id]
@@ -32,6 +30,4 @@ class InMemorySessionRepository:
         for session in self._sessions.values():
             if session.user_id != user_id or session.revoked_at is not None:
                 continue
-            session.revoked_at = now
-            session.updated_at = now
-            session.revoke_reason = reason
+            session.revoke(at=now, reason=reason)

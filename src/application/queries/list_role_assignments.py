@@ -1,9 +1,3 @@
-from dataclasses import dataclass
-from uuid import UUID
+"""Compatibility shim: migrated to context-first package."""
 
-
-@dataclass(frozen=True)
-class ListRoleAssignmentsQuery:
-    """Запрос на получение ролей пользователя."""
-
-    user_id: UUID
+from src.application.access.queries.list_role_assignments import *  # noqa: E501,F401,F403

@@ -1,9 +1,3 @@
-from dataclasses import dataclass
-from uuid import UUID
+"""Compatibility shim: migrated to context-first package."""
 
-
-@dataclass(frozen=True)
-class ListSessionsQuery:
-    """Запрос на получение сессий пользователя."""
-
-    user_id: UUID
+from src.application.session.queries.list_sessions import *  # noqa: E501,F401,F403

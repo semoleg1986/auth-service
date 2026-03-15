@@ -1,10 +1,3 @@
-from __future__ import annotations
+"""Compatibility shim: migrated to context-first package."""
 
-from dataclasses import dataclass
-from uuid import UUID
-
-
-@dataclass(frozen=True)
-class RevokeSessionCommand:
-    user_id: UUID
-    token_id: UUID
+from src.application.session.commands.revoke_session import *  # noqa: E501,F401,F403

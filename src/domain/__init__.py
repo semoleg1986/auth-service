@@ -1,7 +1,9 @@
-from src.domain.aggregates.account import Credential, Session, UserAccount
-from src.domain.policies import AccessPolicy, Actor
-from src.domain.repositories import SessionRepository, UserAccountRepository
-from src.domain.value_objects import AccountStatus, Role
+from src.domain.access import AccessPolicy, Role
+from src.domain.access.access_policy import Actor
+from src.domain.identity import AccountStatus, Credential, UserAccount
+from src.domain.identity.user_account_repository import UserAccountRepository
+from src.domain.session import Session
+from src.domain.session.session_repository import SessionRepository
 
 __all__ = [
     "AccessPolicy",

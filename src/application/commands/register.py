@@ -1,11 +1,3 @@
-from __future__ import annotations
+"""Compatibility shim: migrated to context-first package."""
 
-from dataclasses import dataclass
-
-
-@dataclass(frozen=True)
-class RegisterCommand:
-    email: str | None
-    phone: str | None
-    password: str
-    org_id: str | None = None
+from src.application.identity.commands.register import *  # noqa: E501,F401,F403

@@ -1,8 +1,3 @@
-from __future__ import annotations
+"""Compatibility shim: migrated to context-first package."""
 
-from dataclasses import dataclass
-
-
-@dataclass(frozen=True)
-class LogoutCommand:
-    refresh_token: str
+from src.application.session.commands.logout import *  # noqa: E501,F401,F403

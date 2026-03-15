@@ -1,9 +1,3 @@
-from __future__ import annotations
+"""Compatibility shim: migrated to context-first package."""
 
-from dataclasses import dataclass
-from uuid import UUID
-
-
-@dataclass(frozen=True)
-class BlockUserCommand:
-    user_id: UUID
+from src.application.identity.commands.block_user import *  # noqa: E501,F401,F403

@@ -1,7 +1,3 @@
-from enum import StrEnum
+"""Compatibility shim: migrated to context-first package."""
 
-
-class AccountStatus(StrEnum):
-    ACTIVE = "active"
-    BLOCKED = "blocked"
-    DELETED = "deleted"
+from src.domain.identity.account_status import *  # noqa: E501,F401,F403

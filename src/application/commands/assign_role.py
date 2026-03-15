@@ -1,10 +1,3 @@
-from __future__ import annotations
+"""Compatibility shim: migrated to context-first package."""
 
-from dataclasses import dataclass
-from uuid import UUID
-
-
-@dataclass(frozen=True)
-class AssignRoleCommand:
-    user_id: UUID
-    role: str
+from src.application.access.commands.assign_role import *  # noqa: E501,F401,F403

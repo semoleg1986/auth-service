@@ -1,15 +1,3 @@
-from __future__ import annotations
+"""Compatibility shim: migrated to context-first package."""
 
-from dataclasses import dataclass
-
-
-@dataclass(frozen=True)
-class LoginCommand:
-    identifier: str  # email or phone
-    password: str
-    ip_address: str | None = None
-    user_agent: str | None = None
-    geo_city: str | None = None
-    geo_region: str | None = None
-    geo_country: str | None = None
-    geo_display: str | None = None
+from src.application.session.commands.login import *  # noqa: E501,F401,F403

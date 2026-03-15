@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DbSession
 
-from src.domain.aggregates.account import Session
+from src.domain.session import Session
 from src.infrastructure.persistence.sqlalchemy.models import SessionModel
 
 
@@ -59,13 +59,11 @@ class SqlAlchemySessionRepository:
         model.geo_display = session.geo_display
 
     def revoke(self, token_id: UUID) -> None:
-        model = self._db.get(SessionModel, token_id)
-        if model is None:
+        session = self.get_by_id(token_id)
+        if session is None:
             return
-        now = datetime.now(timezone.utc)
-        model.revoked_at = now
-        model.updated_at = now
-        model.revoke_reason = "logout"
+        session.revoke(at=datetime.now(timezone.utc), reason="logout")
+        self.save(session)
 
     def list_by_user(self, user_id: UUID) -> list[Session]:
         rows = self._db.execute(
@@ -75,13 +73,8 @@ class SqlAlchemySessionRepository:
 
     def revoke_all_by_user(self, user_id: UUID, *, reason: str) -> None:
         now = datetime.now(timezone.utc)
-        rows = self._db.execute(
-            select(SessionModel).where(
-                SessionModel.user_id == user_id,
-                SessionModel.revoked_at.is_(None),
-            )
-        ).scalars()
-        for model in rows:
-            model.revoked_at = now
-            model.updated_at = now
-            model.revoke_reason = reason
+        for session in self.list_by_user(user_id):
+            if session.revoked_at is not None:
+                continue
+            session.revoke(at=now, reason=reason)
+            self.save(session)

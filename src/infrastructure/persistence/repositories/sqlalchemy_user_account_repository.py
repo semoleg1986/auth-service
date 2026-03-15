@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from src.domain.aggregates.account import Credential, UserAccount
-from src.domain.value_objects import AccountStatus, Role
+from src.domain.access import Role
+from src.domain.identity import AccountStatus, Credential, UserAccount
 from src.infrastructure.persistence.sqlalchemy.models import (
     CredentialModel,
     UserAccountModel,
@@ -84,7 +83,6 @@ class SqlAlchemyUserAccountRepository:
     def save(self, account: UserAccount) -> None:
         model = self._db.get(UserAccountModel, account.user_id)
         if model is None:
-            now = datetime.now(timezone.utc)
             model = UserAccountModel(
                 user_id=account.user_id,
                 status=account.status.value,
@@ -93,8 +91,6 @@ class SqlAlchemyUserAccountRepository:
                 version=account.version,
             )
             self._db.add(model)
-        else:
-            now = datetime.now(timezone.utc)
 
         model.email = account.email
         model.phone = account.phone
@@ -103,8 +99,8 @@ class SqlAlchemyUserAccountRepository:
         model.last_login_at = account.last_login_at
         model.blocked_at = account.blocked_at
         model.status_reason = account.status_reason
-        model.updated_at = now
-        model.version = account.version + 1
+        model.updated_at = account.updated_at
+        model.version = account.version
 
         model.credentials = [
             CredentialModel(
@@ -127,6 +123,3 @@ class SqlAlchemyUserAccountRepository:
             UserRoleModel(user_id=account.user_id, role_name=role.name)
             for role in sorted(account.roles, key=lambda r: r.name)
         ]
-
-        account.updated_at = model.updated_at
-        account.version = model.version
